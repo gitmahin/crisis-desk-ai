@@ -1,0 +1,14 @@
+{
+  "extends": "@repo/typescript-config/node.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".build",
+    "preserveConstEnums": true,
+    "allowJs": true,
+    "strictNullChecks": true,
+    "sourceMap": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}

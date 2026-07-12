@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "dev": "serverless offline start --noTimeout",
+    "check:lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ --max-warnings 1000",
+    "fix:lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ --fix --max-warnings=1000",
+    "check:types": "tsc --noEmit --listFiles",
+    "clean": "rm -rf node_modules dist .turbo && echo 'Cleanup complete!'"
+  },
+  "dependencies": {
+    "@repo/database": "workspace:*",
+    "@repo/logger": "workspace:*",
+    "@repo/types": "workspace:*",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "serverless": "^4.38.1",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "serverless-offline": "^14.7.3"
+  }
+}

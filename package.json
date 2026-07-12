@@ -3,15 +3,41 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build:pkg": "pnpm --filter \"./packages/**\" run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "check:lint": "turbo run check:lint",
+    "fix:lint": "turbo run fix:lint",
+    "check:types": "turbo run check:types",
+    "format": "prettier --write \"**/*.{ts,md,json}\"",
+    "check-types": "turbo run check-types",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:seed": "turbo run db:seed",
+    "clean": "turbo run clean && rm -rf node_modules dist .turbo && echo 'Root Cleanup complete!'"
   },
   "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/types": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/cors": "^2.8.19",
+    "@types/node": "^26.1.1",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^0.31.10",
     "prettier": "^3.7.4",
+    "tsdown": "^0.22.3",
+    "tsx": "^4.22.4",
     "turbo": "^2.10.4",
     "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "@repo/shared": "workspace:*",
+    "@repo/zod": "workspace:*",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.22.0",
+    "uuid": "^14.0.1",
+    "zod": "^4.4.3"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {

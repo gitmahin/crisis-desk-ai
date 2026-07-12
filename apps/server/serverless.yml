@@ -1,0 +1,26 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: serverlessmahin
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: crisis-desk-ai
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: serverless
+
+provider:
+  name: aws
+  runtime: nodejs24.x
+  environment:
+    NODE_OPTIONS: --enable-source-maps
+  # Uncomment to easily set up a custom domain. Read the docs for more details:
+  # https://www.serverless.com/framework/docs/providers/aws/guide/domains
+  # domain: api.example.com
+
+functions:
+  api:
+    handler: src/server.handler
+    events:
+      - httpApi: "*"
+
+plugins:
+  # No need to install serverless-plugin-typescript as Serverless now includes ESBuild and supports Typescript out-of-the-box
+
+  - serverless-offline

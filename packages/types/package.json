@@ -1,0 +1,19 @@
+{
+  "name": "@repo/types",
+  "version": "0.1.0",
+  "types": "src/index.d.ts",
+  "license": "AGPL-3.0",
+  "exports": {
+    ".": {
+      "import": "./src/index.d.js",
+      "types": "./src/index.d.ts"
+    }
+  },
+  "scripts": {
+    "gen:docs": "typedoc --out docs"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "lucide-react": "^0.471.2"
+  }
+}

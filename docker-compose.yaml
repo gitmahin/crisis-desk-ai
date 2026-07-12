@@ -1,0 +1,45 @@
+name: Crsis AI
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: crsai-postgres
+    ports:
+      - 5432:5432
+    networks:
+      - crsai
+    volumes:
+      - crsai_pgData:/var/lib/postgresql/MAJOR/docker
+    environment:
+      - POSTGRES_PASSWORD=postgres
+  redis:
+    image: redis:latest
+    container_name: crsai-redis-server
+    networks:
+      - crsai
+    volumes:
+      - crsai_redis:/data
+  redis_insight:
+    depends_on:
+      - "redis"
+    image: redis/redisinsight:latest
+    container_name: crsai-redisinsight
+    volumes:
+      - crsai_redisinsight:/data
+    ports:
+      - 5540:5540
+    networks:
+      - crsai
+    environment:
+      - RI_REDIS_HOST_0=crsai-redis-server
+      - RI_REDIS_PORT_0=6379
+      - RI_REDIS_USERNAME_0=default
+
+networks:
+  crsai:
+    driver: bridge
+
+volumes:
+  crsai_pgData:
+  crsai_redis:
+  crsai_redisinsight:
