@@ -1,15 +1,17 @@
 // ┌─────────────────────────┐
 // │ Base Imports            │
 // └─────────────────────────┘
-import express, { type Express } from "express";
+import express from "express";
+import type { Express, Request, Response } from "express";
 import cors from "cors";
 import serverless from "serverless-http";
 import cookieParser from "cookie-parser";
+import routers from "./routes/index.route"
 
 // ┌─────────────────────────┐
 // │ Event Handler Imports   │
 // └─────────────────────────┘
-import { ApiError, ApiResponse, getSystemCustomErrorMsgByKey, SystemCustomErrorCode, SystemCustomErrorMsgByCode, } from "@repo/shared";
+import { ApiResponse } from "@repo/shared";
 
 // ┌─────────────────────────┐
 // │ Middleware imports      │
@@ -36,13 +38,14 @@ app.use(
 );
 app.use(express.json({ limit: "500kb" }));
 app.use(express.urlencoded({ extended: true, limit: "500kb" }));
+
 app.use(cookieParser());
 app.use(requestLogger());
 
 /* -------------------------------------------------------------------------- */
 /*                                   Routes                                   */
 /* -------------------------------------------------------------------------- */
-// app.use("/api", router);
+app.use("/api", routers);
 
 app.get("/health", (req, res) => {
   // throw new ApiError(500, getSystemCustomErrorMsgByKey("INTERNAL_SERVER_ERROR")!)
@@ -55,4 +58,14 @@ app.get("/health", (req, res) => {
 /* -------------------------------------------------------------------------- */
 app.use(errorHandlerMiddleware);
 
-export const handler = serverless(app);
+export const handler = serverless(app, {
+  request: (request: Request, event: Event) => {
+    if (Buffer.isBuffer(request.body)) {
+      try {
+        request.body = JSON.parse(request.body.toString('utf8'));
+      } catch (err) {
+        request.body = request.body.toString('utf8');
+      }
+    }
+  }
+});

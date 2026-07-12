@@ -4,14 +4,17 @@ import { SystemCustomErrorMsgByCode } from "@/events";
 export class ApiError extends Error implements ApiErrorType {
   public success?: boolean;
   public status: number;
+  public errors: unknown[]
   constructor(
     status: number,
     public error: (typeof SystemCustomErrorMsgByCode)[keyof typeof SystemCustomErrorMsgByCode],
-    override stack?: string
+    override stack?: string,
+    errors?: unknown[]
   ) {
     super(error.message);
     this.status = status;
     this.success = false;
+    this.errors = errors ?? []
 
     if (stack) {
       this.stack = stack;

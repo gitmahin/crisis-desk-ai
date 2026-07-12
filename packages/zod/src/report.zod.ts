@@ -5,7 +5,7 @@ class ReportZSchema {
     static id = z4.uuid({ error: "Invalid Id!" }).nonempty({ error: "Id is required!" })
     createReport = z4.object({
         name: z4.string({ error: "Invalid Name!" }).nonempty({ error: "Name cannot be empty!" }).max(255, { error: "" }),
-        contact: z4.string({ error: "Invalid Number!" }).nonempty({ error: "Phone number cannot be empty!" }).max(20, { error: "" }),
+        contact: z4.string({ error: "Invalid Contact!" }).nonempty({ error: "Phone number cannot be empty!" }).max(20, { error: "" }),
         location: z4.string({ error: "Invalid Location!" }).nonempty({ error: "Location cannot be empty!" }).max(255, { error: "" }),
         // In database description max length is 1000.
         description: z4.string({ error: "Invalid Description!" }).nonempty({ error: "Description cannot be empty!" }).max(500, { error: "" }),
@@ -21,7 +21,7 @@ class ReportZSchema {
         urgency: z4.string().optional()
     })
 
-    updateReport = z4.object({
+    updateReportStatus = z4.object({
         id: ReportZSchema.id,
         status: z4.enum(REPORT_STATUS)
     })
@@ -33,4 +33,4 @@ export const reportZSchema = new ReportZSchema()
 export type CreateReportPayloadType = z4.infer<typeof reportZSchema.createReport> 
 export type GetReportByIdPayloadType = z4.infer<typeof reportZSchema.getReportById>
 export type GetReportByQueryParamsPayloadType = z4.infer<typeof reportZSchema.getReportByQueryParams>
-export type UpdateReportPayloadType = z4.infer<typeof reportZSchema.updateReport>
+export type UpdateReportPayloadType = z4.infer<typeof reportZSchema.updateReportStatus>

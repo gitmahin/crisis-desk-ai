@@ -1,12 +1,18 @@
 enum SYSTEM_CUSTOM_ERROR_EVENTS {
   "INTERNAL_SERVER_ERROR" = "INTERNAL_SERVER_ERROR",
-  "CREATE_REPORT_PAYLOAD_ERROR" = "CREATE_REPORT_PAYLOAD_ERROR"
+  "CREATE_REPORT_PAYLOAD_ERROR" = "CREATE_REPORT_PAYLOAD_ERROR",
+  "UPDATE_REPORT_STS_PAYLOAD_ERROR" = "UPDATE_REPORT_STS_PAYLOAD_ERROR",
+  "GET_REPORT_BY_ID_PAYLOAD_ERROR" = "GET_REPORT_BY_ID_PAYLOAD_ERROR",
+  "GET_REPORT_BY_QUERY_PAYLOAD_ERROR" = "GET_REPORT_BY_QUERY_PAYLOAD_ERROR"
 }
 
 export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
 {
   INTERNAL_SERVER_ERROR: "50000",
-  CREATE_REPORT_PAYLOAD_ERROR: "40001"
+  CREATE_REPORT_PAYLOAD_ERROR: "40001",
+  UPDATE_REPORT_STS_PAYLOAD_ERROR: "40002",
+  GET_REPORT_BY_ID_PAYLOAD_ERROR: "40003",
+  GET_REPORT_BY_QUERY_PAYLOAD_ERROR: "40004",
 };
 
 type SystemCustomErrorMessageDataType = {
@@ -42,6 +48,25 @@ export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
       "The information provided is incorrect or incomplete. Please check your inputs and try again.",
     code: SystemCustomErrorCode.CREATE_REPORT_PAYLOAD_ERROR,
   },
+  [SystemCustomErrorCode.UPDATE_REPORT_STS_PAYLOAD_ERROR]: {
+    title: "Invalid Status Update",
+    message:
+      "We couldn't update the report status. Please ensure the report ID is correct and the selected status is valid.",
+    code: SystemCustomErrorCode.UPDATE_REPORT_STS_PAYLOAD_ERROR,
+  },
+  [SystemCustomErrorCode.GET_REPORT_BY_ID_PAYLOAD_ERROR]: {
+    title: "Invalid Report ID",
+    message:
+      "The report ID provided is invalid. Please check the identifier and try again.",
+    code: SystemCustomErrorCode.GET_REPORT_BY_ID_PAYLOAD_ERROR,
+  },
+  [SystemCustomErrorCode.GET_REPORT_BY_QUERY_PAYLOAD_ERROR]: {
+    title: "Invalid Search Filters",
+    message:
+      "The filters provided (category or urgency) are not recognized. Please check your selection and try again.",
+    code: SystemCustomErrorCode.GET_REPORT_BY_QUERY_PAYLOAD_ERROR,
+  },
+
 };
 
 /**

@@ -10,4 +10,5 @@ export interface ApiErrorType {
   success?: boolean;
   message: string;
   stack?: string;
+  errors?: any[]
 }

@@ -4,4 +4,8 @@ const router: Router = Router()
 
 // Routers imports
 import reportRouter from "./reports.route"
+
+
 router.use("/reports", reportRouter)
+
+export default router
