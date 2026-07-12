@@ -19,7 +19,7 @@ export const errorHandlerMiddleware = (
   if (err instanceof ApiError) {
     error = err;
   } else {
-    const message = err.message || "Something went wrong";
+    const message = err?.message || "Something went wrong";
     error = new ApiError(
       500,
       {

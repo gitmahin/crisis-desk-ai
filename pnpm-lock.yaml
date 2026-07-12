@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@repo/constants':
+        specifier: workspace:*
+        version: link:packages/constants
       '@repo/shared':
         specifier: workspace:*
         version: link:packages/shared
@@ -103,6 +106,8 @@ importers:
       serverless-offline:
         specifier: ^14.7.3
         version: 14.7.4(serverless@4.39.0)
+
+  packages/constants: {}
 
   packages/database:
     dependencies:

@@ -1,15 +1,13 @@
 enum SYSTEM_CUSTOM_ERROR_EVENTS {
-  "USER_DUP_EMAIL" = "USER_DUP_EMAIL",
-  "USER_DUP_USRNAME" = "USER_DUP_USRNAME",
   "INTERNAL_SERVER_ERROR" = "INTERNAL_SERVER_ERROR",
+  "CREATE_REPORT_PAYLOAD_ERROR" = "CREATE_REPORT_PAYLOAD_ERROR"
 }
 
 export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
-  {
-    USER_DUP_EMAIL: "10001",
-    USER_DUP_USRNAME: "10002",
-    INTERNAL_SERVER_ERROR: "50000",
-  };
+{
+  INTERNAL_SERVER_ERROR: "50000",
+  CREATE_REPORT_PAYLOAD_ERROR: "40001"
+};
 
 type SystemCustomErrorMessageDataType = {
   title?: string;
@@ -32,21 +30,17 @@ type SystemCustomErrorMessageType = {
  * return res.status(500).json(error);
  */
 export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
-  [SystemCustomErrorCode.USER_DUP_EMAIL]: {
-    title: "User Already Exists",
-    message: "A user with this email already exists.",
-    code: SystemCustomErrorCode.USER_DUP_EMAIL,
-  },
-  [SystemCustomErrorCode.USER_DUP_USRNAME]: {
-    title: "User Already Exists",
-    message: "A user with this username already exists.",
-    code: SystemCustomErrorCode.USER_DUP_USRNAME,
-  },
   [SystemCustomErrorCode.INTERNAL_SERVER_ERROR]: {
     title: "Unexpected Error",
     message:
       "Something went wrong on our end. Please try again later or contact support if the issue persists.",
     code: SystemCustomErrorCode.INTERNAL_SERVER_ERROR,
+  },
+  [SystemCustomErrorCode.CREATE_REPORT_PAYLOAD_ERROR]: {
+    title: "Invalid Report Details",
+    message:
+      "The information provided is incorrect or incomplete. Please check your inputs and try again.",
+    code: SystemCustomErrorCode.CREATE_REPORT_PAYLOAD_ERROR,
   },
 };
 
@@ -67,5 +61,5 @@ export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
 export const getSystemCustomErrorMsgByKey = (
   key: keyof typeof SYSTEM_CUSTOM_ERROR_EVENTS
 ) => {
-  return SystemCustomErrorMsgByCode[key];
+  return SystemCustomErrorMsgByCode[SystemCustomErrorCode[key]];
 };

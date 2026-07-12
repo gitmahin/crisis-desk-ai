@@ -9,7 +9,7 @@ import cookieParser from "cookie-parser";
 // ┌─────────────────────────┐
 // │ Event Handler Imports   │
 // └─────────────────────────┘
-import { ApiError, ApiResponse, SystemCustomErrorMsgByCode,  } from "@repo/shared";
+import { ApiError, ApiResponse, getSystemCustomErrorMsgByKey, SystemCustomErrorCode, SystemCustomErrorMsgByCode, } from "@repo/shared";
 
 // ┌─────────────────────────┐
 // │ Middleware imports      │
@@ -45,6 +45,7 @@ app.use(requestLogger());
 // app.use("/api", router);
 
 app.get("/health", (req, res) => {
+  // throw new ApiError(500, getSystemCustomErrorMsgByKey("INTERNAL_SERVER_ERROR")!)
   res.status(200).json(new ApiResponse(200, "OK"))
 })
 
