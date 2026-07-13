@@ -11,13 +11,14 @@ import routers from "./routes/index.route"
 
 // ┌─────────────────────────┐
 // │ Event Handler Imports   │
-// └─────────────────────────┘
-import { ApiResponse } from "@repo/shared";
+// └─────────────────────────┘ 
+import { ApiResponse } from "@repo/shared"; 
 
 // ┌─────────────────────────┐
 // │ Middleware imports      │
 // └─────────────────────────┘
 import { errorHandlerMiddleware, requestLogger } from "./middlewares";
+import { connectRedis, redisClient } from "./libs/redis";
 // import { postgres } from "./libs";
 
 
@@ -41,15 +42,22 @@ app.use(express.json({ limit: "500kb" }));
 app.use(express.urlencoded({ extended: true, limit: "500kb" }));
 
 app.use(cookieParser());
-app.use(requestLogger());
+
+// dont run logger in production for aws lambda
+if (process.env.NODE_ENV === 'development') {
+  app.use(requestLogger());
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                   Routes                                   */
 /* -------------------------------------------------------------------------- */
 app.use("/api", routers);
 
-app.get("/health", (req, res) => {
+app.get("/health", async (req, res) => {
   // throw new ApiError(500, getSystemCustomErrorMsgByKey("INTERNAL_SERVER_ERROR")!)
+  await connectRedis()
+  const result = await redisClient.ping()
+  console.log(result)
   res.status(200).json(new ApiResponse(200, "OK"))
 })
 

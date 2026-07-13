@@ -23,11 +23,11 @@ export const usersTable = pgTable("users", {
     role: userRoleEnum().default("USER").notNull(),
     name: t.varchar({ length: 255 }),
     email: t.varchar({ length: 255 }).unique(),
-    password: t.varchar({ length: 20 }),
+    password: t.varchar({ length: 255 }),
     contact: t.varchar({ length: 20 }),
     ...table_timestamps
 }, (table) => [
-    t.check("password_max_length_check", sql`length(${table.password}) <= 20`),
+    t.check("password_max_length_check", sql`length(${table.password}) <= 255`),
 ]);
 
 /* -------------------------------------------------------------------------- */

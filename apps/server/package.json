@@ -5,13 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "serverless offline start --noTimeout",
+    "package": "serverless package",
+    "deploy": "serverless deploy",
+    "remove": "serverless remove",
     "check:lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ --max-warnings 1000",
     "fix:lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ --fix --max-warnings=1000",
     "check:types": "tsc --noEmit --listFiles",
     "clean": "rm -rf node_modules dist .turbo && echo 'Cleanup complete!'"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.29.0", 
     "@repo/database": "workspace:*",
     "@repo/logger": "workspace:*",
     "@repo/types": "workspace:*",
@@ -23,6 +26,8 @@
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
+       "serverless-esbuild": "^1.57.2",
+    "esbuild": "^0.28.1",
     "eslint": "^9.39.1",
     "serverless-offline": "^14.7.3"
   }

@@ -34,7 +34,7 @@ export class CookieService {
             secure: false,
             sameSite: "lax",
             path: "/",
-            maxAge: REFRESH_TOKEN_EXPIRY_SEC, // 30 days
+            maxAge: REFRESH_TOKEN_EXPIRY_SEC * 1000, // 30 days
         },
     };
 
@@ -49,7 +49,7 @@ export class CookieService {
             secure: false,
             sameSite: "lax",
             path: "/",
-            maxAge: ACCESS_TOKEN_EXPIRY_SEC, // 5 min
+            maxAge: ACCESS_TOKEN_EXPIRY_SEC * 1000, // 5 min
         },
     };
 }
