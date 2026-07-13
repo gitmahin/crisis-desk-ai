@@ -1,3 +1,4 @@
+import "dotenv/config"
 import { baseConfig } from "@/config"
 import {createGoogleGenerativeAI} from "@ai-sdk/google"
 

@@ -1,9 +1,10 @@
-import { createMcpHandler , McpServer} from '@modelcontextprotocol/server';
+import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { localhostHostValidation, localhostOriginValidation, toNodeHandler } from "@modelcontextprotocol/node"
 
 import z4 from 'zod/v4';
 import { baseConfig } from './config';
 import { createServer } from 'node:http';
+import { ReportTools } from './tools/reports.tools';
 
 
 
@@ -18,6 +19,8 @@ const handler = createMcpHandler(() => {
         },
         async ({ text }) => ({ content: [{ type: 'text', text: `Saved: ${text}` }] })
     );
+
+    new ReportTools(server).init()
 
     return server;
 });
