@@ -1,81 +1,9 @@
 {
-  "id": "ee73d6d4-559d-4a80-b638-82839f20bf5f",
+  "id": "9f93442b-41ee-47a3-ab89-555fbfb95948",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.duplicate_reports": {
-      "name": "duplicate_reports",
-      "schema": "",
-      "columns": {
-        "duplWith": {
-          "name": "duplWith",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "dupl_by": {
-          "name": "dupl_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "duplicate_reports_duplWith_reports_id_fk": {
-          "name": "duplicate_reports_duplWith_reports_id_fk",
-          "tableFrom": "duplicate_reports",
-          "tableTo": "reports",
-          "columnsFrom": [
-            "duplWith"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "duplicate_reports_dupl_by_reports_id_fk": {
-          "name": "duplicate_reports_dupl_by_reports_id_fk",
-          "tableFrom": "duplicate_reports",
-          "tableTo": "reports",
-          "columnsFrom": [
-            "dupl_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "duplicate_reports_duplWith_dupl_by_pk": {
-          "name": "duplicate_reports_duplWith_dupl_by_pk",
-          "columns": [
-            "duplWith",
-            "dupl_by"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.reports": {
       "name": "reports",
       "schema": "",
@@ -222,13 +150,25 @@
           "name": "name",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "name": "password",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
         },
         "contact": {
           "name": "contact",
           "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -253,10 +193,22 @@
           "columns": [
             "id"
           ]
+        },
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "password_max_length_check": {
+          "name": "password_max_length_check",
+          "value": "length(\"users\".\"password\") <= 20"
+        }
+      },
       "isRLSEnabled": false
     }
   },

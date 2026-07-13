@@ -40,22 +40,6 @@ export const reportsTable = pgTable("reports", {
     ...table_timestamps
 });
 
-export const duplicateReportsTable = pgTable(
-    "duplicate_reports",
-    {
-        duplWith: t.uuid()
-            .notNull()
-            .references(() => reportsTable.id, { onDelete: "cascade" }),
-        duplBy: t.uuid("dupl_by")
-            .notNull()
-            .references(() => reportsTable.id, { onDelete: "cascade" }),
-        ...table_timestamps
-    },
-    (table) => ([
-        primaryKey({ columns: [table.duplWith, table.duplBy] }),
-    ])
-);
-
 
 /* -------------------------------------------------------------------------- */
 /*                                  Relations                                 */
@@ -64,18 +48,5 @@ export const reportsTableRelations = relations(reportsTable, ({ one, many }) => 
     submittedBy: one(usersTable, {
         fields: [reportsTable.user],
         references: [usersTable.id],
-    }),
-    duplicate_reports: many(duplicateReportsTable)
-}));
-
-export const duplicateReportsTableRelations = relations(duplicateReportsTable, ({ one }) => ({
-    duplicateOf: one(reportsTable, {
-        fields: [duplicateReportsTable.duplWith],
-        references: [reportsTable.id],
-
-    }),
-    duplicateReport: one(reportsTable, {
-        fields: [duplicateReportsTable.duplBy],
-        references: [reportsTable.id],
-    }),
+    })
 }));

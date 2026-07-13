@@ -6,7 +6,10 @@ enum SYSTEM_CUSTOM_ERROR_EVENTS {
   "GET_REPORT_BY_QUERY_PAYLOAD_ERROR" = "GET_REPORT_BY_QUERY_PAYLOAD_ERROR",
   "REPORT_NOT_FOUND" = "REPORT_NOT_FOUND",
   "RESOURCE_NOT_FOUND" = "RESOURCE_NOT_FOUND",
-  "DUPLICATE_REPORT_FOUND" = "DUPLICATE_REPORT_FOUND"
+  "DUPLICATE_REPORT_FOUND" = "DUPLICATE_REPORT_FOUND",
+   "INVALID_USER_INPUT" = "INVALID_USER_INPUT",
+   "INVALID_CREDENTIALS" = "INVALID_CREDENTIALS",
+     "UNAUTHORIZED" = "UNAUTHORIZED"
 }
 
 export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
@@ -19,6 +22,9 @@ export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
   REPORT_NOT_FOUND: "40401",
   RESOURCE_NOT_FOUND: "40402",
   DUPLICATE_REPORT_FOUND: "40901",
+   INVALID_USER_INPUT: "40005",
+   INVALID_CREDENTIALS: "40101",
+    UNAUTHORIZED: "40100",
 };
 
 type SystemCustomErrorMessageDataType = {
@@ -90,7 +96,23 @@ export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
       "A similar report already exists for this incident. Please review the existing report before submitting a new one.",
     code: SystemCustomErrorCode.DUPLICATE_REPORT_FOUND,
   },
-
+  [SystemCustomErrorCode.INVALID_USER_INPUT]: {
+    title: "Invalid Input",
+    message:
+      "The input provided is invalid. Please review your entries and try again.",
+    code: SystemCustomErrorCode.INVALID_USER_INPUT,
+  },
+  [SystemCustomErrorCode.INVALID_CREDENTIALS]: {
+    title: "Invalid Credentials",
+    message: "The email or password you entered is incorrect.",
+    code: SystemCustomErrorCode.INVALID_CREDENTIALS,
+},
+ [SystemCustomErrorCode.UNAUTHORIZED]: {
+    title: "Unauthorized",
+    message:
+      "Your session has expired or is invalid. Please log in again.",
+    code: SystemCustomErrorCode.UNAUTHORIZED,
+  },
 };
 
 /**
