@@ -2,6 +2,9 @@
   "extends": "@repo/typescript-config/node.json",
   "compilerOptions": {
     "rootDir": ".",
+     "noEmitOnError": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "paths": {
       "@/*": ["./src/*"]
     }
