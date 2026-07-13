@@ -1,13 +1,11 @@
-import {Router} from "express"
-const router: Router = Router()
-
+import { Router } from "express";
+const router: Router = Router();
 
 // Routers imports
-import reportRouter from "./reports.route"
-import userRouter from "./user.route"
+import reportRouter from "./reports.route";
+import userRouter from "./user.route";
 
+router.use("/reports", reportRouter);
+router.use("/user", userRouter);
 
-router.use("/reports", reportRouter)
-router.use("/user", userRouter)
-
-export default router
+export default router;

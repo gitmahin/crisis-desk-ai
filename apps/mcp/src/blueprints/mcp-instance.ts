@@ -1,15 +1,15 @@
-import type { McpServer } from "@modelcontextprotocol/server"
+import type { McpServer } from "@modelcontextprotocol/server";
 
 interface IMcpInstance {
-    init(): void
+  init(): void;
 }
 
 export abstract class McpRegistrar implements IMcpInstance {
-    protected server: McpServer
+  protected server: McpServer;
 
-    constructor(server: McpServer) {
-        this.server = server
-    }
+  constructor(server: McpServer) {
+    this.server = server;
+  }
 
-    abstract init(): void
+  abstract init(): void;
 }

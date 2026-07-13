@@ -104,12 +104,8 @@
           "name": "reports_user_users_id_fk",
           "tableFrom": "reports",
           "tableTo": "users",
-          "columnsFrom": [
-            "user"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -119,9 +115,7 @@
         "reports_id_unique": {
           "name": "reports_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "policies": {},
@@ -190,16 +184,12 @@
         "users_id_unique": {
           "name": "users_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         },
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -216,10 +206,7 @@
     "public.languageS": {
       "name": "languageS",
       "schema": "public",
-      "values": [
-        "BN",
-        "EN"
-      ]
+      "values": ["BN", "EN"]
     },
     "public.report_categories": {
       "name": "report_categories",
@@ -239,21 +226,12 @@
     "public.report_status": {
       "name": "report_status",
       "schema": "public",
-      "values": [
-        "PENDING",
-        "IN_REVIEW",
-        "ASSIGNED",
-        "RESOLVED",
-        "REJECTED"
-      ]
+      "values": ["PENDING", "IN_REVIEW", "ASSIGNED", "RESOLVED", "REJECTED"]
     },
     "public.user_role": {
       "name": "user_role",
       "schema": "public",
-      "values": [
-        "ADMIN",
-        "USER"
-      ]
+      "values": ["ADMIN", "USER"]
     }
   },
   "schemas": {},

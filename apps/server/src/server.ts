@@ -6,13 +6,12 @@ import type { Express, Request } from "express";
 import cors from "cors";
 import serverless from "serverless-http";
 import cookieParser from "cookie-parser";
-import routers from "./routes/index.route"
-
+import routers from "./routes/index.route";
 
 // ┌─────────────────────────┐
 // │ Event Handler Imports   │
-// └─────────────────────────┘ 
-import { ApiResponse } from "@repo/shared"; 
+// └─────────────────────────┘
+import { ApiResponse } from "@repo/shared";
 
 // ┌─────────────────────────┐
 // │ Middleware imports      │
@@ -20,7 +19,6 @@ import { ApiResponse } from "@repo/shared";
 import { errorHandlerMiddleware, requestLogger } from "./middlewares";
 import { connectRedis, redisClient } from "./libs/redis";
 // import { postgres } from "./libs";
-
 
 // ┌─────────────────────────┐
 // │ Router Imports          │
@@ -44,7 +42,7 @@ app.use(express.urlencoded({ extended: true, limit: "500kb" }));
 app.use(cookieParser());
 
 // dont run logger in production for aws lambda
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === "development") {
   app.use(requestLogger());
 }
 
@@ -55,12 +53,11 @@ app.use("/api", routers);
 
 app.get("/health", async (req, res) => {
   // throw new ApiError(500, getSystemCustomErrorMsgByKey("INTERNAL_SERVER_ERROR")!)
-  await connectRedis()
-  const result = await redisClient.ping()
-  console.log(result)
-  res.status(200).json(new ApiResponse(200, "OK"))
-})
-
+  await connectRedis();
+  const result = await redisClient.ping();
+  console.log(result);
+  res.status(200).json(new ApiResponse(200, "OK"));
+});
 
 /* -------------------------------------------------------------------------- */
 /*                          Error Handler Middleware                          */
@@ -71,10 +68,10 @@ export const handler = serverless(app, {
   request: (request: Request, event: Event) => {
     if (Buffer.isBuffer(request.body)) {
       try {
-        request.body = JSON.parse(request.body.toString('utf8'));
+        request.body = JSON.parse(request.body.toString("utf8"));
       } catch (err) {
-        request.body = request.body.toString('utf8');
+        request.body = request.body.toString("utf8");
       }
     }
-  }
+  },
 });

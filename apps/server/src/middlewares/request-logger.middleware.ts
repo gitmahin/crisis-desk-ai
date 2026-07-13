@@ -33,7 +33,7 @@ export const requestLogger = () => {
                 title: res.locals.errorTitle,
                 message: res.locals.errorMessage,
                 code: res.locals.errorCode,
-                errors: res.locals.errors
+                errors: res.locals.errors,
               }
             : undefined,
       };

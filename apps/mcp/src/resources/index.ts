@@ -1,1 +1,1 @@
-export * from "./reports.resource"
+export * from "./reports.resource";

@@ -1,4 +1,3 @@
-
 /**
  * This file code is mainly for grpc database server only.
  *
@@ -121,7 +120,9 @@ export const CustomDrizzleErrorMessage: DrizzleErrorType = {
   },
 };
 
-export const getFromattedDrizzleError = (error: any): DrizzleErrorInfo | null => {
+export const getFromattedDrizzleError = (
+  error: any
+): DrizzleErrorInfo | null => {
   if (error?.code === "ECONNREFUSED") {
     return { code: error?.code, message: "Could not reach the database." };
   }
@@ -139,7 +140,7 @@ export const getFromattedDrizzleError = (error: any): DrizzleErrorInfo | null =>
     return { message: error.message, code: error.code };
   }
 
-  return null
+  return null;
 };
 
 export class CustomDbError extends DatabaseError {

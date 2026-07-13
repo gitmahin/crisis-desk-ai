@@ -1,16 +1,18 @@
 import type { Postgres } from "@repo/shared";
 import { sql } from "drizzle-orm";
 
-export async function resetDb<T extends Record<string, unknown>>(postgres: ReturnType<Postgres<T>["createConnection"]>) {
-    if (process.env.NODE_ENV === "production") {
-        console.error("❌ Database reset is disabled in production.");
-        process.exit(1);
-    }
-    try {
-        console.log("⏳ Resetting database...");
-        const start = Date.now();
+export async function resetDb<T extends Record<string, unknown>>(
+  postgres: ReturnType<Postgres<T>["createConnection"]>
+) {
+  if (process.env.NODE_ENV === "production") {
+    console.error("❌ Database reset is disabled in production.");
+    process.exit(1);
+  }
+  try {
+    console.log("⏳ Resetting database...");
+    const start = Date.now();
 
-        const sqlQueries = sql`
+    const sqlQueries = sql`
                         -- Delete all tables
                         DO $$ DECLARE
                             r RECORD;
@@ -50,16 +52,16 @@ export async function resetDb<T extends Record<string, unknown>>(postgres: Retur
                                 EXECUTE 'DROP SCHEMA ' || quote_ident(f_rec.schema_name) || ' CASCADE';
                             END LOOP;
                         END $$;
-                    `
+                    `;
 
-        await postgres.execute(sqlQueries);
+    await postgres.execute(sqlQueries);
 
-        const end = Date.now();
-        console.log(`✅ Reset end & took ${end - start}ms\n`);
-        process.exit(0);
-    } catch (error) {
-        console.error("❌ Reset failed");
-        console.error(error);
-        process.exit(1);
-    }
+    const end = Date.now();
+    console.log(`✅ Reset end & took ${end - start}ms\n`);
+    process.exit(0);
+  } catch (error) {
+    console.error("❌ Reset failed");
+    console.error(error);
+    process.exit(1);
+  }
 }

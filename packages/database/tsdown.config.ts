@@ -6,6 +6,6 @@ export default defineConfig({
   dts: true,
   platform: "neutral",
   deps: {
-    neverBundle: ["dotenv"]
-  }
+    neverBundle: ["dotenv"],
+  },
 });

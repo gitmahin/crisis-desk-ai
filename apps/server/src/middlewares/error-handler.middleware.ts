@@ -24,7 +24,7 @@ export const errorHandlerMiddleware = (
       500,
       {
         ...SystemCustomErrorMsgByCode[
-        SystemCustomErrorCode.INTERNAL_SERVER_ERROR
+          SystemCustomErrorCode.INTERNAL_SERVER_ERROR
         ]!,
         message,
       },
@@ -37,7 +37,7 @@ export const errorHandlerMiddleware = (
   res.locals.errorTitle = error.error.title;
   res.locals.errorMessage = error.error.message;
   res.locals.errorCode = error.error.code;
-  res.locals.errors = error.errors
+  res.locals.errors = error.errors;
 
   const status = error.status;
   const success = error.success;
@@ -46,7 +46,7 @@ export const errorHandlerMiddleware = (
     status,
     success,
     ...(BaseConfig.NODE_ENV === "development" ? { stack: error.stack } : {}),
-    errors: error.errors
+    errors: error.errors,
   };
 
   res.status(status).json(response);

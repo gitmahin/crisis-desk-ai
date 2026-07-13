@@ -5,7 +5,7 @@ export default defineConfig({
   format: ["esm", "cjs"],
   dts: true,
   platform: "neutral",
-    deps: {
-    neverBundle: ["dotenv"]
-  }
+  deps: {
+    neverBundle: ["dotenv"],
+  },
 });

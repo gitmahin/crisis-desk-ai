@@ -5,5 +5,5 @@ export default defineConfig({
   format: ["esm"],
   dts: false,
   outDir: "build",
-  platform: "node"
+  platform: "node",
 });

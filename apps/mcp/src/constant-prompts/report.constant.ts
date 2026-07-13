@@ -1,4 +1,4 @@
-import { REPORT_CATEGORY, REPORT_URGENCY } from "@repo/constants"
+import { REPORT_CATEGORY, REPORT_URGENCY } from "@repo/constants";
 
 export const REPORT_PREDICTION_PROMPT = `
 Classify the incident.

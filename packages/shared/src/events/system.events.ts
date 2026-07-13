@@ -7,25 +7,25 @@ enum SYSTEM_CUSTOM_ERROR_EVENTS {
   "REPORT_NOT_FOUND" = "REPORT_NOT_FOUND",
   "RESOURCE_NOT_FOUND" = "RESOURCE_NOT_FOUND",
   "DUPLICATE_REPORT_FOUND" = "DUPLICATE_REPORT_FOUND",
-   "INVALID_USER_INPUT" = "INVALID_USER_INPUT",
-   "INVALID_CREDENTIALS" = "INVALID_CREDENTIALS",
-     "UNAUTHORIZED" = "UNAUTHORIZED"
+  "INVALID_USER_INPUT" = "INVALID_USER_INPUT",
+  "INVALID_CREDENTIALS" = "INVALID_CREDENTIALS",
+  "UNAUTHORIZED" = "UNAUTHORIZED",
 }
 
 export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
-{
-  INTERNAL_SERVER_ERROR: "50000",
-  CREATE_REPORT_PAYLOAD_ERROR: "40001",
-  UPDATE_REPORT_STS_PAYLOAD_ERROR: "40002",
-  GET_REPORT_BY_ID_PAYLOAD_ERROR: "40003",
-  GET_REPORT_BY_QUERY_PAYLOAD_ERROR: "40004",
-  REPORT_NOT_FOUND: "40401",
-  RESOURCE_NOT_FOUND: "40402",
-  DUPLICATE_REPORT_FOUND: "40901",
-   INVALID_USER_INPUT: "40005",
-   INVALID_CREDENTIALS: "40101",
+  {
+    INTERNAL_SERVER_ERROR: "50000",
+    CREATE_REPORT_PAYLOAD_ERROR: "40001",
+    UPDATE_REPORT_STS_PAYLOAD_ERROR: "40002",
+    GET_REPORT_BY_ID_PAYLOAD_ERROR: "40003",
+    GET_REPORT_BY_QUERY_PAYLOAD_ERROR: "40004",
+    REPORT_NOT_FOUND: "40401",
+    RESOURCE_NOT_FOUND: "40402",
+    DUPLICATE_REPORT_FOUND: "40901",
+    INVALID_USER_INPUT: "40005",
+    INVALID_CREDENTIALS: "40101",
     UNAUTHORIZED: "40100",
-};
+  };
 
 type SystemCustomErrorMessageDataType = {
   title?: string;
@@ -106,11 +106,10 @@ export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
     title: "Invalid Credentials",
     message: "The email or password you entered is incorrect.",
     code: SystemCustomErrorCode.INVALID_CREDENTIALS,
-},
- [SystemCustomErrorCode.UNAUTHORIZED]: {
+  },
+  [SystemCustomErrorCode.UNAUTHORIZED]: {
     title: "Unauthorized",
-    message:
-      "Your session has expired or is invalid. Please log in again.",
+    message: "Your session has expired or is invalid. Please log in again.",
     code: SystemCustomErrorCode.UNAUTHORIZED,
   },
 };

@@ -1,2 +1,2 @@
-export * from "./report.zod"
-export * from "./user.zod"
+export * from "./report.zod";
+export * from "./user.zod";

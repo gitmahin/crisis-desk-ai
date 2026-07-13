@@ -1,4 +1,3 @@
-
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
@@ -8,7 +7,9 @@ export default defineConfig({
   verbose: true,
   strict: true,
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "postgresql://postgres:postgres@localhost:5432/postgres",
+    url:
+      process.env.DATABASE_URL ??
+      "postgresql://postgres:postgres@localhost:5432/postgres",
   },
   migrations: {
     schema: "public",

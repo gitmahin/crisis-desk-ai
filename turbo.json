@@ -1,7 +1,14 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["GOOGLE_GENERATIVE_AI_API_KEY", "GROQ_AI_API_KEY", "DATABASE_URL", "NODE_ENV", "MCP_HOST", "MCP_PORT"],
+  "globalEnv": [
+    "GOOGLE_GENERATIVE_AI_API_KEY",
+    "GROQ_AI_API_KEY",
+    "DATABASE_URL",
+    "NODE_ENV",
+    "MCP_HOST",
+    "MCP_PORT"
+  ],
   "globalDependencies": [".env"],
   "tasks": {
     "build": {

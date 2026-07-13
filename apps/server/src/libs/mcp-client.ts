@@ -1,14 +1,19 @@
-import { Client } from "@modelcontextprotocol/sdk/client"
+import { Client } from "@modelcontextprotocol/sdk/client";
 // keep it .js otherwise serverless will throw error
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
-export const mcpClient = new Client({
-    name: "crisis-desk-ai-client", 
-    version: "1.0.0"
-}, {
+export const mcpClient = new Client(
+  {
+    name: "crisis-desk-ai-client",
+    version: "1.0.0",
+  },
+  {
     capabilities: {
-        sampling: {},
-    }
-})
+      sampling: {},
+    },
+  }
+);
 
-export const transport = new StreamableHTTPClientTransport(new URL("http://localhost:5001/"))
+export const transport = new StreamableHTTPClientTransport(
+  new URL("http://localhost:5001/")
+);

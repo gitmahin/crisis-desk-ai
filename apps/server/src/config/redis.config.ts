@@ -1,4 +1,4 @@
-import "dotenv/config"
+import "dotenv/config";
 export type RedisConfigType = {
   REDIS_USERNAME: string;
   REDIS_PASS: string;
