@@ -4,6 +4,7 @@ import { REPORT_PREDICTION_PROMPT } from "@/constant-prompts";
 import { reportsTable, usersTable, type PgReportsSelectType } from "@repo/database"
 import { postgres } from "@/lib/db.connect";
 import z4 from "zod/v4";
+import { generateText } from "ai"
 
 import { eq } from "drizzle-orm";
 import { convertToValidJson, groq } from "@repo/shared";
@@ -33,31 +34,22 @@ export class ReportTools {
         }, async (payload) => {
             const { contact, description, language, location, name } = payload
 
-
             // Sampling is deprecated. So we have to call LLM directly
-            const response = await groq.chat.completions.create({
-                response_format: { type: "json_object" },
-                messages: [
-                    {
-                        role: "user",
-                        content: `
-                                You are an emergency incident classification AI.
-                                Analyze the incident report below and classify it.
+            const { text } = await generateText({
+                model: groq("openai/gpt-oss-20b"),
+                
+                prompt: `You are an emergency incident classification AI.
+                            Analyze the incident report below and classify it.
 
-                                Input:
-                                - Name: ${name}
-                                - Contact: ${contact}
-                                - Location: ${location}
-                                - Description: ${description}
-                                - Language: ${language}
+                            Input:
+                            - Name: ${name}
+                            - Contact: ${contact}
+                            - Location: ${location}
+                            - Description: ${description}
+                            - Language: ${language}
 
-                                ${REPORT_PREDICTION_PROMPT}`,
-                    },
-                ],
-                model: "openai/gpt-oss-20b",
-            });
-
-            const text = response.choices[0]?.message.content || ""
+                            ${REPORT_PREDICTION_PROMPT}`
+            })
 
             if (!text) {
 

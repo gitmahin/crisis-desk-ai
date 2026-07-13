@@ -1,5 +1,7 @@
 
 import { sharedConfig } from "@/config/shared.config";
-import Groq from "groq-sdk";
+import { createGroq } from "@ai-sdk/groq"
 
-export const groq = new Groq({ apiKey: "" });
+export const groq = createGroq({
+    apiKey: ""
+}) 
