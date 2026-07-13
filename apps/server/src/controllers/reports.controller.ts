@@ -10,6 +10,7 @@ import { generateText, jsonSchema, type ToolSet } from "ai"
 import "dotenv/config"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import { BaseConfig } from "@/config";
+import { groq } from "@/libs/ai-models";
 
 
 
@@ -72,11 +73,13 @@ export class ReportController {
             "matchedReportId": string | null
             }
 
-            Rules:
-            - "possibleDuplicate" is true only if you find a clear match to an existing report.
-            - "matchedReportId" must be the "id" field of the matched existing report, or null if no duplicate was found.
-            - If multiple reports could match, return the closest/most likely match only.
-            - Return valid JSON only — no explanations, no prose, no markdown code blocks.`,
+          Rules:
+    - "possibleDuplicate" is true only if you find a clear match to an existing report.
+    - "matchedReportId" must be the "id" field of the matched existing report, or null if no duplicate was found.
+    - If multiple reports could match, return the closest/most likely match only.
+    - If the existing reports list is empty, missing, null, not an array, or otherwise unusable/unavailable, you MUST return { "possibleDuplicate": false, "matchedReportId": null } — do not guess or treat this as an error.
+    - If you are ever unsure, unable to compare, or anything goes wrong, default to { "possibleDuplicate": false, "matchedReportId": null }.
+    - Always return valid JSON matching the exact shape above — no explanations, no prose, no markdown code blocks, under every circumstance.`,
             messages: [
                 { role: "user", content: "Check if this new report is a duplicate." }
             ]

@@ -51,7 +51,7 @@ export class ReportResources extends McpRegistrar {
 
                 return {
                     contents: [
-                        { uri: uri.href, text: "There is no reports!", },
+                        { uri: uri.href, text: JSON.stringify({}) },
                     ],
                 };
 
@@ -59,7 +59,7 @@ export class ReportResources extends McpRegistrar {
                 console.error("Failed to fetch reports:", error);
                 return {
                     contents: [
-                        { uri: uri.href, text: "Failed to get reports!" },
+                        { uri: uri.href, text: JSON.stringify({}) },
                     ],
                 };
 
