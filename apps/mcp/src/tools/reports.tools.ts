@@ -80,7 +80,7 @@ export class ReportTools extends McpRegistrar {
                     }
 
                     const [report] = await tx.insert(reportsTable).values({
-                        user: user!.id,
+                        user: user?.id,
                         description: description,
                         location: location,
                         language: String(language).toUpperCase(),
@@ -88,7 +88,8 @@ export class ReportTools extends McpRegistrar {
                         confidence: predicted_data.confidence,
                         suggested_action: predicted_data.suggested_action,
                         urgency: String(predicted_data.urgency).toUpperCase(),
-                        summary: predicted_data.summary
+                        summary: predicted_data.summary,
+                        
                     }).returning()
 
                     return [String(user?.id), String(report?.id)]

@@ -143,6 +143,9 @@ importers:
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
+      eslint:
+        specifier: ^9.39.1
+        version: 9.39.1
       serverless-offline:
         specifier: ^14.7.3
         version: 14.7.4(serverless@4.39.0)
@@ -4627,7 +4630,7 @@ snapshots:
     dependencies:
       '@eslint/object-schema': 2.1.7
       debug: 4.4.3
-      minimatch: 3.1.2
+      minimatch: 3.1.5
     transitivePeerDependencies:
       - supports-color
 
@@ -4648,7 +4651,7 @@ snapshots:
       ignore: 5.3.2
       import-fresh: 3.3.1
       js-yaml: 4.1.0
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
       - supports-color
@@ -6512,7 +6515,7 @@ snapshots:
       is-glob: 4.0.3
       json-stable-stringify-without-jsonify: 1.0.1
       lodash.merge: 4.6.2
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       natural-compare: 1.4.0
       optionator: 0.9.4
     transitivePeerDependencies:
