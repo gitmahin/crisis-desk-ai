@@ -1,12 +1,11 @@
 import type { Postgres } from "@repo/shared";
 import { sql } from "drizzle-orm";
 
-if (process.env.NODE_ENV === "production") {
-    console.error("❌ Database reset is disabled in production.");
-    process.exit(1);
-}
-
 export async function resetDb<T extends Record<string, unknown>>(postgres: ReturnType<Postgres<T>["createConnection"]>) {
+    if (process.env.NODE_ENV === "production") {
+        console.error("❌ Database reset is disabled in production.");
+        process.exit(1);
+    }
     try {
         console.log("⏳ Resetting database...");
         const start = Date.now();

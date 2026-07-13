@@ -56,6 +56,7 @@ export class ReportResources extends McpRegistrar {
                 };
 
             } catch (error) {
+                console.error("Failed to fetch reports:", error);
                 return {
                     contents: [
                         { uri: uri.href, text: "Failed to get reports!" },

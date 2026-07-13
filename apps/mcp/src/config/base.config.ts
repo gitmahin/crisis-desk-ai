@@ -8,8 +8,8 @@ type BaseConfigType = {
 }
 
 export const baseConfig: BaseConfigType = {
-    PORT: Number(process.env.MCP_PORT)!,
-    HOST: String(process.env.MCP_HOST)!,
+    PORT: Number(process.env.PORT)!,
+    HOST: String(process.env.HOST)!,
     DATABASE_URL: String(process.env.DATABASE_URL)!,
     GROQ_API_KEY: String(process.env.GROQ_AI_API_KEY)!
 

@@ -1,3 +1,10 @@
 export const convertToValidJson = (data: string) => {
-    return JSON.parse(data.trim().replace(/^```json/, "").replace(/```$/, "").trim())
+    const cleaned = data.trim().replace(/^```json/, "").replace(/```$/, "").trim();
+
+    try {
+        return JSON.parse(cleaned);
+    } catch {
+        return data;
+    }
+
 }
