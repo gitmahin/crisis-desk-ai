@@ -14,18 +14,10 @@ import { ReportResources } from "./resources";
 const handler = createMcpHandler(() => {
   const server = new McpServer({ name: "notes", version: "1.0.0" });
 
-  server.registerTool(
-    "add-note",
-    {
-      description: "Save a note",
-      inputSchema: z4.object({ text: z4.string() }),
-    },
-    async ({ text }) => ({
-      content: [{ type: "text", text: `Saved: ${text}` }],
-    })
-  );
-
+  // Register tools
   new ReportTools(server).init();
+
+  // Register resources
   new ReportResources(server).init();
 
   return server;

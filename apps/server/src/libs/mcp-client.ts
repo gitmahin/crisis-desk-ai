@@ -1,3 +1,4 @@
+import { BaseConfig } from "@/config";
 import { Client } from "@modelcontextprotocol/sdk/client";
 // keep it .js otherwise serverless will throw error
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -15,5 +16,5 @@ export const mcpClient = new Client(
 );
 
 export const transport = new StreamableHTTPClientTransport(
-  new URL("http://localhost:5001/")
+  new URL(BaseConfig.MCP_BASE_URL)
 );
