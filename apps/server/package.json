@@ -23,6 +23,7 @@
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
+    "eslint": "^9.39.1",
     "serverless-offline": "^14.7.3"
   }
 }

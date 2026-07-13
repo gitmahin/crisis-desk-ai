@@ -1,6 +1,6 @@
 import { postgres } from "@/libs";
 import { reportsTable, usersTable } from "@repo/database";
-import { validateWithZod, getSystemCustomErrorMsgByKey, ApiResponse, ApiError, getGroq, convertToValidJson, } from "@repo/shared"
+import { validateWithZod, getSystemCustomErrorMsgByKey, ApiResponse, ApiError,  convertToValidJson, } from "@repo/shared"
 import { reportZSchema, type GetReportByIdPayloadType, type UpdateReportPayloadType } from "@repo/zod"
 import type { Request, Response } from "express"
 import z4 from "zod/v4";
@@ -9,7 +9,6 @@ import { mcpClient, transport } from "@/libs/mcp-client";
 import { generateText, jsonSchema, type ToolSet } from "ai"
 import "dotenv/config"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
-import { BaseConfig } from "@/config";
 import { groq } from "@/libs/ai-models";
 
 

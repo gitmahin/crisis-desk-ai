@@ -2,7 +2,7 @@
 // │ Base Imports            │
 // └─────────────────────────┘
 import express from "express";
-import type { Express, Request, Response } from "express";
+import type { Express, Request } from "express";
 import cors from "cors";
 import serverless from "serverless-http";
 import cookieParser from "cookie-parser";

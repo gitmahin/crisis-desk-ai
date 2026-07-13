@@ -1,6 +1,6 @@
 import { AuthConfig } from "@/config";
 import { postgres } from "@/libs";
-import { ACCESS_TOKEN_EXPIRY_SEC, CookieService, REFRESH_TOKEN_EXPIRY_SEC } from "@/services/cookie.server";
+import { ACCESS_TOKEN_EXPIRY_SEC, CookieService } from "@/services/cookie.server";
 import { usersTable } from "@repo/database";
 import { ApiError, ApiResponse, getSystemCustomErrorMsgByKey } from "@repo/shared";
 import { eq } from "drizzle-orm";
