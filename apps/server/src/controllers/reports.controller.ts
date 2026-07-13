@@ -1,6 +1,6 @@
 import { postgres } from "@/libs";
 import { reportsTable, usersTable } from "@repo/database";
-import { validateWithZod, getSystemCustomErrorMsgByKey, ApiResponse, ApiError, groq, convertToValidJson, } from "@repo/shared"
+import { validateWithZod, getSystemCustomErrorMsgByKey, ApiResponse, ApiError, getGroq, convertToValidJson, } from "@repo/shared"
 import { reportZSchema, type GetReportByIdPayloadType, type UpdateReportPayloadType } from "@repo/zod"
 import type { Request, Response } from "express"
 import z4 from "zod/v4";
@@ -9,6 +9,14 @@ import { mcpClient, transport } from "@/libs/mcp-client";
 import { generateText, jsonSchema, type ToolSet } from "ai"
 import "dotenv/config"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
+import { BaseConfig } from "@/config";
+
+
+
+type DuplicateResponseDataType = {
+    possibleDuplicate: boolean,
+    matchedReportId: string
+}
 
 
 export class ReportController {
@@ -24,6 +32,61 @@ export class ReportController {
         }
 
         await mcpClient.connect(transport)
+
+
+
+        const { contents } = await mcpClient.readResource({ uri: "reports://all" })
+
+        if (!contents[0]) {
+            throw new ApiError(400, getSystemCustomErrorMsgByKey("RESOURCE_NOT_FOUND")!);
+        }
+
+        const resource_text = (contents[0] as { text: string }).text
+
+        if (!resource_text) {
+            throw new ApiError(400, getSystemCustomErrorMsgByKey("RESOURCE_NOT_FOUND")!);
+        }
+
+        const resource_response = JSON.parse(resource_text)
+
+        const { text: model_response } = await generateText({
+            model: groq("openai/gpt-oss-20b"),
+            instructions: `You are a duplicate incident report detector.
+
+            You will be given:
+            1. A list of existing reports (with their id, location, category, and description).
+            2. A new incoming report to check against that list.
+
+            A report is considered a possible duplicate if it describes the same real-world incident as an existing report — same or very similar location, same category, and a description referring to the same event (even if worded differently). Minor differences in wording, contact info, or timestamp do NOT rule out a duplicate.
+
+            Existing reports:
+            ${JSON.stringify(resource_response)}
+
+            New incoming report:
+            ${JSON.stringify(data)}
+
+            Return ONLY a JSON object with this exact shape, no other text, no markdown formatting, no code fences:
+
+            {
+            "possibleDuplicate": boolean,
+            "matchedReportId": string | null
+            }
+
+            Rules:
+            - "possibleDuplicate" is true only if you find a clear match to an existing report.
+            - "matchedReportId" must be the "id" field of the matched existing report, or null if no duplicate was found.
+            - If multiple reports could match, return the closest/most likely match only.
+            - Return valid JSON only — no explanations, no prose, no markdown code blocks.`,
+            messages: [
+                { role: "user", content: "Check if this new report is a duplicate." }
+            ]
+        });
+
+        const parsed_model_response: DuplicateResponseDataType = convertToValidJson(model_response)
+
+        if (parsed_model_response.possibleDuplicate) {
+            throw new ApiError(400, getSystemCustomErrorMsgByKey("DUPLICATE_REPORT_FOUND")!, "", [parsed_model_response])
+        }
 
         const { tools } = await mcpClient.listTools()
 
@@ -47,8 +110,10 @@ export class ReportController {
             tools: groqTools
         })
 
+
         // @ts-ignore
-        const toolResult = toolResults[0]?.result as CallToolResult | undefined;
+        const toolResult = toolResults[0]?.output as CallToolResult | undefined;
+        console.error("here is the tool result", toolResult?.structuredContent)
 
         // @ts-ignore
         return res.status(201).json(new ApiResponse(201, text || toolResult?.content[0]?.text || "No response from AI", toolResult?.structuredContent))
@@ -95,8 +160,8 @@ export class ReportController {
 
         const filters: SQL[] = [];
 
-        if (data.category) filters.push(eq(reportsTable.category, data.category));
-        if (data.urgency) filters.push(eq(reportsTable.urgency, data.urgency));
+        if (data.category) filters.push(eq(reportsTable.category, String(data.category).toUpperCase()));
+        if (data.urgency) filters.push(eq(reportsTable.urgency, String(data.urgency).toUpperCase()));
 
         const reports = await postgres
             .select({

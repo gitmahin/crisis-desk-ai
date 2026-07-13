@@ -1,7 +1,12 @@
-import { sharedConfig } from "@/config/shared.config"
-import {createGoogleGenerativeAI} from "@ai-sdk/google"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
 
+let _google: ReturnType<typeof createGoogleGenerativeAI> | null = null;
 
-export const google = createGoogleGenerativeAI({
-    apiKey: sharedConfig.GEMINI_API_KEY
-})
+export const getGoogle = (apikey: string) => {
+    if (!_google) {
+        _google = createGoogleGenerativeAI({
+            apiKey: apikey
+        });
+    }
+    return _google;
+};

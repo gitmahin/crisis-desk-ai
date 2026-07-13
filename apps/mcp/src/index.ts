@@ -4,7 +4,8 @@ import { localhostHostValidation, localhostOriginValidation, toNodeHandler } fro
 import z4 from 'zod/v4';
 import { baseConfig } from './config';
 import { createServer } from 'node:http';
-import { ReportTools } from './tools/reports.tools';
+import { ReportTools } from './tools';
+import { ReportResources } from './resources';
 
 
 
@@ -21,6 +22,7 @@ const handler = createMcpHandler(() => {
     );
 
     new ReportTools(server).init()
+    new ReportResources(server).init()
 
     return server;
 });

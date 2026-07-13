@@ -7,13 +7,14 @@ import z4 from "zod/v4";
 import { generateText } from "ai"
 
 import { eq } from "drizzle-orm";
-import { convertToValidJson, groq } from "@repo/shared";
+import { convertToValidJson } from "@repo/shared";
+import { McpRegistrar } from "@/blueprints";
+import { baseConfig } from "@/config";
+import { groq } from "@/lib/ai-models";
 
-export class ReportTools {
-    private server: McpServer
-    constructor(server: McpServer) {
-        this.server = server
-    }
+
+
+export class ReportTools extends McpRegistrar {
 
     registerCreateReport() {
         this.server.registerTool("create-new-report", {
@@ -187,6 +188,6 @@ export class ReportTools {
 
     init() {
         this.registerCreateReport()
-        this.allReports()
+        
     }
 }

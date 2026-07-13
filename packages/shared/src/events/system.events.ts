@@ -4,8 +4,9 @@ enum SYSTEM_CUSTOM_ERROR_EVENTS {
   "UPDATE_REPORT_STS_PAYLOAD_ERROR" = "UPDATE_REPORT_STS_PAYLOAD_ERROR",
   "GET_REPORT_BY_ID_PAYLOAD_ERROR" = "GET_REPORT_BY_ID_PAYLOAD_ERROR",
   "GET_REPORT_BY_QUERY_PAYLOAD_ERROR" = "GET_REPORT_BY_QUERY_PAYLOAD_ERROR",
-    "REPORT_NOT_FOUND" = "REPORT_NOT_FOUND",
-    "RESOURCE_NOT_FOUND" = "RESOURCE_NOT_FOUND"
+  "REPORT_NOT_FOUND" = "REPORT_NOT_FOUND",
+  "RESOURCE_NOT_FOUND" = "RESOURCE_NOT_FOUND",
+  "DUPLICATE_REPORT_FOUND" = "DUPLICATE_REPORT_FOUND"
 }
 
 export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
@@ -15,8 +16,9 @@ export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
   UPDATE_REPORT_STS_PAYLOAD_ERROR: "40002",
   GET_REPORT_BY_ID_PAYLOAD_ERROR: "40003",
   GET_REPORT_BY_QUERY_PAYLOAD_ERROR: "40004",
-   REPORT_NOT_FOUND: "40401",
-    RESOURCE_NOT_FOUND: "40402",
+  REPORT_NOT_FOUND: "40401",
+  RESOURCE_NOT_FOUND: "40402",
+  DUPLICATE_REPORT_FOUND: "40901",
 };
 
 type SystemCustomErrorMessageDataType = {
@@ -70,7 +72,7 @@ export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
       "The filters provided (category or urgency) are not recognized. Please check your selection and try again.",
     code: SystemCustomErrorCode.GET_REPORT_BY_QUERY_PAYLOAD_ERROR,
   },
-   [SystemCustomErrorCode.REPORT_NOT_FOUND]: {
+  [SystemCustomErrorCode.REPORT_NOT_FOUND]: {
     title: "Report Not Found",
     message:
       "No report was found with the provided ID. Please check the identifier and try again.",
@@ -82,6 +84,13 @@ export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
       "The requested resource could not be found. Please check the identifier and try again.",
     code: SystemCustomErrorCode.RESOURCE_NOT_FOUND,
   },
+  [SystemCustomErrorCode.DUPLICATE_REPORT_FOUND]: {
+    title: "Duplicate Report Detected",
+    message:
+      "A similar report already exists for this incident. Please review the existing report before submitting a new one.",
+    code: SystemCustomErrorCode.DUPLICATE_REPORT_FOUND,
+  },
+
 };
 
 /**

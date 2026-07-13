@@ -1,7 +1,12 @@
+import { createGroq, type GroqProvider } from "@ai-sdk/groq";
 
-import { sharedConfig } from "@/config/shared.config";
-import { createGroq } from "@ai-sdk/groq"
+let _groq: GroqProvider | null = null;
 
-export const groq = createGroq({
-    apiKey: ""
-}) 
+export const getGroq = (apiKey?: string): GroqProvider => {
+    if (!_groq) {
+        _groq = createGroq({ apiKey });
+    }
+    return _groq;
+};
+
+export type { GroqProvider };
