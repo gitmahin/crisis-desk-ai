@@ -29,6 +29,7 @@
   },
   "peerDependencies": {
     "drizzle-orm": "^0.45.2",
+    "@repo/constants": "workspace:*",
     "pg": "^8.22.0"
   },
   "license": "ISC"
