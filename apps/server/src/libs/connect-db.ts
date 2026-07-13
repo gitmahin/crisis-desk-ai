@@ -1,8 +1,5 @@
-// import { DbConfig } from "@/config";
-// import { Postgres } from "@repo/shared";
-// import * as schema from "@repo/database";
+import { Postgres } from "@repo/shared"
+import * as schema from "@repo/database"
+import { BaseConfig } from "@/config"
 
-// export const postgres = new Postgres().createConnection(
-//   DbConfig.DATABASE_URI,
-//   schema
-// );
+export const postgres = new Postgres().createConnection(BaseConfig.DATABASE_URI, schema)

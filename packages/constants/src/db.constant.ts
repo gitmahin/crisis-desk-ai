@@ -3,7 +3,6 @@ export const SUPPORTED_LANGUAGES = [
     "EN"
 ] as const
 
-
 export const REPORT_CATEGORY = [
     "MEDICAL",
     "FIRE",
@@ -28,3 +27,10 @@ export const REPORT_STATUS = [
     "RESOLVED",
     "REJECTED",
 ] as const
+
+export const REPORT_URGENCY = [
+    "LOW",
+    "MEDIUM",
+    "HIGH",
+    "CRITICAL",
+]

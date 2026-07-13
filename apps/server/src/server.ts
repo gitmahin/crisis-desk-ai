@@ -8,6 +8,7 @@ import serverless from "serverless-http";
 import cookieParser from "cookie-parser";
 import routers from "./routes/index.route"
 
+
 // ┌─────────────────────────┐
 // │ Event Handler Imports   │
 // └─────────────────────────┘

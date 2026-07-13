@@ -1,5 +1,5 @@
 import z4 from "zod/v4";
-import { REPORT_CATEGORY, REPORT_STATUS, SUPPORTED_LANGUAGES } from "@repo/constants";
+import { REPORT_CATEGORY, REPORT_STATUS, REPORT_URGENCY, SUPPORTED_LANGUAGES } from "@repo/constants";
 
 class ReportZSchema {
     static id = z4.uuid({ error: "Invalid Id!" }).nonempty({ error: "Id is required!" })
@@ -18,7 +18,7 @@ class ReportZSchema {
 
     getReportByQueryParams = z4.object({
         category: z4.enum(REPORT_CATEGORY).optional(),
-        urgency: z4.string().optional()
+        urgency: z4.enum(REPORT_URGENCY).optional()
     })
 
     updateReportStatus = z4.object({
