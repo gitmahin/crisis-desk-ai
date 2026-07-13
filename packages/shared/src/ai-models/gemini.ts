@@ -1,7 +1,7 @@
-import "dotenv/config"
-import { baseConfig } from "@/config"
+import { sharedConfig } from "@/config/shared.config"
 import {createGoogleGenerativeAI} from "@ai-sdk/google"
 
+
 export const google = createGoogleGenerativeAI({
-    apiKey: baseConfig.GEMINI_API_KEY
+    apiKey: sharedConfig.GEMINI_API_KEY
 })
