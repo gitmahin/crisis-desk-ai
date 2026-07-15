@@ -1,0 +1,1 @@
+export const MODEL_CRN_HEADER_KEY = "X-Model-crn"

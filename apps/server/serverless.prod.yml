@@ -8,10 +8,10 @@ service: serverless
 build:
   esbuild: false # keep esbuild false. we have to use serverless-esbuild for monorepo structure
   
-
 provider:
   name: aws
   runtime: nodejs24.x
+  region: ap-south-1
   environment:
     # pass environment variables during deploying
     NODE_OPTIONS: --enable-source-maps
@@ -36,7 +36,6 @@ functions:
 
 
 plugins:
-  # No need to install serverless-plugin-typescript as Serverless now includes ESBuild and supports Typescript out-of-the-box
   - serverless-esbuild
   - serverless-offline
 

@@ -1,4 +1,4 @@
-import { postgres } from "@/libs";
+import { createFingerprint, postgres } from "@/libs";
 import { reportsTable, usersTable } from "@repo/database";
 import {
   validateWithZod,
@@ -20,6 +20,10 @@ import { generateText, jsonSchema, type ToolSet } from "ai";
 import "dotenv/config";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import { groq } from "@/libs/ai-models";
+import { MODEL_CRN_HEADER_KEY } from "@repo/constants"
+import { connectRedis } from "@/libs/redis";
+import { reportsRedis } from "@/redis";
+import { hash } from "node:crypto";
 
 type DuplicateResponseDataType = {
   possibleDuplicate: boolean;
@@ -27,8 +31,14 @@ type DuplicateResponseDataType = {
 };
 
 export class ReportController {
+  static getModelCrn(header: Request["header"]) {
+    return header(MODEL_CRN_HEADER_KEY)
+  }
+
   async createReport(req: Request, res: Response) {
     const payload = req.body;
+
+    const model_crn = ReportController.getModelCrn(req.header)
 
     const { data, success, error } = validateWithZod(
       payload,
@@ -67,7 +77,7 @@ export class ReportController {
     const resource_response = JSON.parse(resource_text);
 
     const { text: model_response } = await generateText({
-      model: groq("openai/gpt-oss-20b"),
+      model: groq(model_crn ?? "openai/gpt-oss-20b"),
       instructions: `You are a duplicate incident report detector.
 
             You will be given:
@@ -133,7 +143,7 @@ export class ReportController {
     );
 
     const { text, toolResults } = await generateText({
-      model: groq("openai/gpt-oss-20b"),
+      model: groq(model_crn ?? "openai/gpt-oss-20b"),
       prompt: `Create new report with the following payload: ${JSON.stringify(data)}`,
       tools: groqTools,
     });
@@ -348,6 +358,22 @@ export class ReportController {
   }
 
   async getReportsAnalyticsSummary(req: Request, res: Response) {
+
+    // Check if user pass specific model_crn
+    const model_crn = ReportController.getModelCrn(req.header)
+
+    // Check if there is any cache based on the user ip
+    const hash_key = createFingerprint(req)
+    const short_hash_key = hash_key.slice(0, 20)
+    await connectRedis()
+
+    const cache_result = await reportsRedis.getCachedReportAnalytics(short_hash_key)
+    // const [result] = await reportsRedis.cacheReportAnalytics(hash_key, {})
+
+    if (cache_result) {
+      return res.status(200).json(new ApiResponse(200, "OK", JSON.parse(cache_result)));
+    }
+
     await mcpClient.connect(transport);
 
     const { contents } = await mcpClient.readResource({ uri: "reports://all" });
@@ -371,7 +397,7 @@ export class ReportController {
     const data = JSON.parse(resource_text);
 
     const { text } = await generateText({
-      model: groq("openai/gpt-oss-20b"),
+      model: groq(model_crn ?? "openai/gpt-oss-20b"),
       instructions: `You are an incident report analytics engine.
  
                              You have access to the following incident report data:
@@ -415,6 +441,7 @@ export class ReportController {
     });
 
     const valid_model_output = convertToValidJson(text);
+    await reportsRedis.cacheReportAnalytics(hash_key, valid_model_output)
 
     return res.status(200).json(new ApiResponse(200, "OK", valid_model_output));
   }

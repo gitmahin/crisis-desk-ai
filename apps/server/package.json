@@ -20,15 +20,17 @@
     "@repo/types": "workspace:*",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "rate-limit-redis": "^5.0.0",
     "serverless": "^4.38.1",
     "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
-    "serverless-esbuild": "^1.57.2",
     "esbuild": "^0.28.1",
     "eslint": "^9.39.1",
+    "serverless-esbuild": "^1.57.2",
     "serverless-offline": "^14.7.3"
   }
 }

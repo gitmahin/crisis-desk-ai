@@ -5,7 +5,7 @@ const router: Router = Router();
 import reportRouter from "./reports.route";
 import userRouter from "./user.route";
 
-router.use("/reports", reportRouter);
-router.use("/user", userRouter);
+router.use("/v1/reports", reportRouter);
+router.use("/v1/user", userRouter);
 
 export default router;
