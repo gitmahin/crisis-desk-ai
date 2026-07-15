@@ -1,6 +1,6 @@
 
 
-# Create repository in AWS ECR
+# Create private repository in AWS ECR
 # Then pass the repository url in the output
 resource "aws_ecr_repository" "app" {
   name                 = var.ecr_repo_name

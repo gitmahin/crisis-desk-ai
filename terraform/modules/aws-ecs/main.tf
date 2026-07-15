@@ -1,7 +1,15 @@
 
-resource "aws_security_group" "ecs_service_security_group" {
-  name_prefix = "${var.ecs_service_name}-task-"
+# Create Load balancer security group
+resource "aws_security_group" "alb_security_group" {
+  name_prefix = "${var.ecs_service_name}-alb-security-group"
   vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   egress {
     from_port   = 0
@@ -10,7 +18,26 @@ resource "aws_security_group" "ecs_service_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
+}
+
+# Create Service task security groups
+# And attach alb security group as source
+resource "aws_security_group" "ecs_task_security_group" {
+  name_prefix = "${var.ecs_service_name}-task-"
+  vpc_id      = var.vpc_id
+
   ingress {
+    from_port   = var.container_port
+    to_port     = var.container_port
+    protocol    = "tcp"
+    security_groups = [aws_security_group.alb_security_group.id]
+  }
+
+  egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -22,15 +49,24 @@ resource "aws_security_group" "ecs_service_security_group" {
   }
 }
 
+
+
 # Create application load balancer
 resource "aws_lb" "app_lb" {
   name               = "${var.ecs_service_name}-alb"
   internal           = false # true if only accessed inside the VPC/VPN
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.ecs_service_security_group.id]
+  security_groups    = [aws_security_group.alb_security_group.id]
   subnets            = var.vpc_public_subnets
+  
 
   enable_deletion_protection = false # set true in production once stable
+
+  depends_on = [ aws_security_group.alb_security_group ]
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Route all traffic to the task
@@ -49,7 +85,12 @@ resource "aws_lb_target_group" "app_lb_tg" {
     unhealthy_threshold = 3
     matcher             = "200"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
+
 
 # http listener
 resource "aws_lb_listener" "http" {
@@ -61,6 +102,8 @@ resource "aws_lb_listener" "http" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app_lb_tg.arn
   }
+
+  depends_on = [ aws_lb_target_group.app_lb_tg, aws_lb.app_lb ]
 }
 
 # Role creation
@@ -85,39 +128,7 @@ resource "aws_iam_role_policy_attachment" "attach_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-resource "aws_ecs_service" "ecs_service" {
-  name            = var.ecs_service_name
-  cluster         = var.ecs_cluster_id
-  task_definition = aws_ecs_task_definition.task_def.arn
-  desired_count   = var.desired_task_count
-  launch_type     = "FARGATE"
 
-  network_configuration {
-    subnets          = var.vpc_private_subnets
-    security_groups  = [aws_security_group.ecs_service_security_group.id]
-    assign_public_ip = false
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.app_lb_tg.arn # ← was var.target_group_arn, now created above
-    container_name   = var.container_name
-    container_port   = var.container_port
-  }
-
-  deployment_maximum_percent         = 200
-  deployment_minimum_healthy_percent = 100
-
-  depends_on = [
-    var.ecs_cluster_capacity_providers,
-    aws_lb_listener.http # ensures the listener exists before ECS tries to attach
-  ]
-
-  tags = var.default_service_tags
-
-  lifecycle {
-    ignore_changes = [task_definition]
-  }
-}
 
 resource "aws_cloudwatch_log_group" "ecs" {
   name              = "/ecs/${var.ecs_service_name}"
@@ -179,4 +190,47 @@ resource "aws_ecs_task_definition" "task_def" {
   ])
 
   tags = var.default_service_tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+
+resource "aws_ecs_service" "ecs_service" {
+  name            = var.ecs_service_name
+  cluster         = var.ecs_cluster_id
+  task_definition = aws_ecs_task_definition.task_def.arn
+  desired_count   = var.desired_task_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = var.vpc_private_subnets
+    security_groups  = [aws_security_group.ecs_task_security_group.id]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app_lb_tg.arn
+    container_name   = var.container_name
+    container_port   = var.container_port
+  }
+
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
+
+  depends_on = [
+    var.ecs_cluster_capacity_providers,
+    aws_lb_listener.http, # ensures the listener exists before ECS tries to attach
+    aws_ecs_task_definition.task_def
+  ]
+
+  tags = var.default_service_tags
+
+
+
+  lifecycle {
+    ignore_changes = [task_definition]
+    create_before_destroy = true
+  }
 }

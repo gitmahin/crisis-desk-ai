@@ -21,17 +21,26 @@ variable "image_tag" {
   default = "latest"
 }
 
-variable "ecr_repo_name" {
-  type    = string
-  default = "crisis-desk-ai-repository"
-}
+# variable "ecr_repo_name" {
+#   type    = string
+#   default = "crisis-desk-ai-repository"
+# }
 
+
+# dockerhub
+variable "public_image_repo_name" {
+  type = string
+  default = "dockermahin/mcp-crisis-desk-ai"
+}
 
 # ECS Cluster variables
 variable "ecs_cluster_name" {
   type    = string
   default = "crisis-desk-ai-cluster"
 }
+
+# ECS variables
+
 
 # VPC variables
 variable "vpc_id" {
@@ -57,3 +66,35 @@ variable "vpc_public_subnets_tags" {
 }
 
 
+# AWS ssm variables
+variable "database_url" {
+  type = string
+}
+
+variable "groq_api_key" {
+  type = string
+}
+
+variable "redis_username" {
+  type = string
+}
+
+variable "redis_password" {
+  type = string
+}
+
+variable "redis_host" {
+  type = string
+}
+
+variable "redis_port" {
+  type = string
+}
+
+variable "jwt_access_secret_key" {
+  type = string
+}
+
+variable "jwt_refresh_secret_key" {
+  type = string
+}

@@ -40,7 +40,7 @@ variable "container_health_check_path" {
 
 variable "container_name" {
   type    = string
-  default = "crisis-desk-ai"
+  default = "crisis-desk-ai-mcp"
 }
 
 variable "container_port" {
