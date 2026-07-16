@@ -3,20 +3,20 @@ import { redisClient } from "@/libs/redis";
 class ReportsRedis {
 
     static REPORT_ANALYTICS_KEY: string = "analytics:"
-    static REPORT_ANALYTICS_EXPIRY: number = 3
+    static REPORT_ANALYTICS_EXPIRY: number = 30
 
     async cacheReportAnalytics(key: string, data: any) {
         // cache for 10s
         const analytics_report_key = ReportsRedis.REPORT_ANALYTICS_KEY + key
-        const [, res_2] = await redisClient.multi().set(analytics_report_key, JSON.stringify(data)).expire(analytics_report_key, ReportsRedis.REPORT_ANALYTICS_EXPIRY).exec()
+        const res_2 = await redisClient.set(analytics_report_key, JSON.stringify(data), { expiration: { type: "EX", value: ReportsRedis.REPORT_ANALYTICS_EXPIRY } })
         return Number(res_2)
     }
-    
+
     async getCachedReportAnalytics(key: string): Promise<[unknown, string | null]> {
 
         // redis keys
         const analytics_report_key = ReportsRedis.REPORT_ANALYTICS_KEY + key
-        const req_analytics_count_key = `req_analysis_count:${key}`
+        const req_analytics_count_key = `req_analytics_count:${key}`
 
         // get values
         const [analytics_report, ttl, request_count] = await redisClient.multi().get(analytics_report_key).ttl(analytics_report_key).get(req_analytics_count_key).exec()

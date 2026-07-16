@@ -30,7 +30,7 @@ export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
   UNKNOWN_ERROR: "50001",
 };
 
-type SystemCustomErrorMessageDataType = {
+export type SystemCustomErrorMessageDataType = {
   title?: string;
   message: string;
   code: string;

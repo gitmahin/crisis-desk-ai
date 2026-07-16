@@ -12,19 +12,23 @@ import {
   reportsTable,
   usersTable,
   type PgReportsSelectType,
+  type PgUserSelectType
 } from "@repo/database";
 import { postgres } from "@/lib/db.connect";
 import z4 from "zod/v4";
 import { generateText } from "ai";
 
 import { eq } from "drizzle-orm";
-import { convertToValidJson } from "@repo/shared";
+import { ApiError, convertToValidJson, getSystemCustomErrorMsgByKey } from "@repo/shared";
 import { McpRegistrar } from "@/blueprints";
 import { baseConfig } from "@/config";
 import { groq } from "@/lib/ai-models";
 import { asyncToolHandler } from "@/lib";
-import { MCPToolException } from "@/lib/exception-handlers";
+
 import { MCPToolResponse } from "@/lib/tool-response";
+import { MCPToolException } from "@/lib/exceptions-handlers";
+import { connectRedis } from "@/lib/redis";
+import { reportRedis } from "@/redis/report.redis";
 
 
 
@@ -42,11 +46,7 @@ export class ReportTools extends McpRegistrar {
           idempotentHint: false,
           openWorldHint: true,
           readOnlyHint: false,
-        },
-        outputSchema: z4.object({
-          user_id: z4.string().nullable(),
-          report_id: z4.string().nullable(),
-        }),
+        }
       },
       asyncToolHandler(createReportTool)
     );
@@ -96,23 +96,22 @@ const createReportTool = async (payload: CreateReportPayloadType, ctx: ServerCon
 
   const [user_id, report_id] = await postgres.transaction(
     async (tx) => {
-      const [user] = await tx
-        .insert(usersTable)
-        .values({
-          name: name,
-          contact: contact,
-        })
-        .returning();
 
-      if (!user) {
-        tx.rollback();
-        throw new MCPToolException("User not created", ReportTools.CREATE_NEW_REPORT)
-      }
+      const [exists_user] = await tx.select().from(usersTable).where(eq(usersTable.contact, contact))
+
+      const db_user = exists_user ??
+        (
+          await tx
+            .insert(usersTable)
+            .values({ name, contact })
+            .returning()
+        )[0];
+
 
       const [report] = await tx
         .insert(reportsTable)
         .values({
-          user: user.id,
+          user: db_user!.id,
           description: description,
           location: location,
           language: String(language).toUpperCase(),
@@ -124,9 +123,13 @@ const createReportTool = async (payload: CreateReportPayloadType, ctx: ServerCon
         })
         .returning();
 
-      return [String(user?.id), String(report?.id)];
+      return [db_user?.id, report?.id];
     }
   );
+
+  if (!user_id && !report_id) {
+    throw new MCPToolException("User or Report failed to create! Try Again.", ReportTools.CREATE_NEW_REPORT)
+  }
 
   return new MCPToolResponse(
     "Report has been submitted successfully",

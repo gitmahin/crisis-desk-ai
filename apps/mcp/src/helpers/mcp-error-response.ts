@@ -12,7 +12,6 @@ export class MCPErrorResponse {
 
   }
 
-
   toObject(): Record<string, unknown> {
     return {
       code: this.code,

@@ -1,4 +1,4 @@
-import type { MCPErrorResponse } from "./mcp-error-response";
+import type { MCPErrorResponse } from "@/helpers";
 
 export abstract class MCPException extends Error {
   readonly errorCode: string;

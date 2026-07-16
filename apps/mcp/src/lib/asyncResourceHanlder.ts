@@ -1,11 +1,15 @@
-import type { ReadResourceCallback } from "@modelcontextprotocol/server";
-import { handleMCPError, MCPException } from "./exception-handlers";
+import type { ReadResourceCallback, ReadResourceTemplateCallback } from "@modelcontextprotocol/server";
+
+import { MCPException } from "@/blueprints";
+import { handleMCPError } from "./exceptions-handlers";
 
 export const asyncResourceHandler = (
-  requestHandlerFn: ReadResourceCallback
-): ReadResourceCallback => {
+  requestHandlerFn: ReadResourceTemplateCallback
+): ReadResourceTemplateCallback => {
   return ((...args: any[]) => {
     return Promise.resolve((requestHandlerFn as any)(...args)).catch((error) => {
+
+      console.log("Error here:", error)
       const errorResponse =
         error instanceof MCPException
           ? error.toErrorResponse()
@@ -22,5 +26,5 @@ export const asyncResourceHandler = (
         isError: true,
       };
     });
-  }) as ReadResourceCallback;
+  }) as ReadResourceTemplateCallback;
 };

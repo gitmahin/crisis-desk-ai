@@ -25,6 +25,7 @@ import { connectRedis } from "@/libs/redis";
 import { reportsRedis } from "@/redis";
 import { hash } from "node:crypto";
 import { v4 as uuidv4 } from "uuid"
+import { getPreparedReportStats } from "@/queries";
 
 type DuplicateResponseDataType = {
   possibleDuplicate: boolean;
@@ -149,7 +150,15 @@ export class ReportController {
 
     // @ts-ignore
     const toolResult = toolResults[0]?.output as CallToolResult | undefined;
-    console.error("here is the tool result", toolResult?.structuredContent);
+    console.error("here is the tool result", toolResults, text);
+
+    if (toolResult?.isError) {
+      const error = toolResult._meta?.error
+      // @ts-ignore
+      throw new ApiError(400, { title: "", message: error.message, code: error.code })
+    }
+    // @ts-ignore
+    const valid_data = convertToValidJson(toolResult?.content[0]?.text)
 
     // @ts-ignore
     return res
@@ -158,7 +167,7 @@ export class ReportController {
         new ApiResponse(
           201,
           // @ts-ignore
-          text || toolResult?.content[0]?.text || "No response from AI",
+          valid_data || "No response from AI",
           toolResult?.structuredContent
         )
       );
@@ -203,63 +212,39 @@ export class ReportController {
   }
 
   async getAllReports(req: Request, res: Response) {
-    const queryParams = req.query;
+ 
+      const queryParams = req.query;
 
-    const { data, success, error } = validateWithZod(
-      queryParams,
-      reportZSchema.getReportByQueryParams
-    );
-
-    if (!success) {
-      throw new ApiError(
-        400,
-        getSystemCustomErrorMsgByKey("GET_REPORT_BY_QUERY_PAYLOAD_ERROR")!,
-        "",
-        [z4.flattenError(error)]
-      );
-    }
-
-    const filters: SQL[] = [];
-
-    if (data.category)
-      filters.push(
-        // @ts-ignore
-        eq(reportsTable.category, String(data.category).toUpperCase())
-      );
-    if (data.urgency)
-      filters.push(
-        eq(reportsTable.urgency, String(data.urgency).toUpperCase())
+      const { data, success, error } = validateWithZod(
+        queryParams,
+        reportZSchema.getReportByQueryParams
       );
 
-    const reports = await postgres
-      .select({
-        id: reportsTable.id,
-        location: reportsTable.location,
-        geo_location: reportsTable.geo_location,
-        language: reportsTable.language,
-        description: reportsTable.description,
-        category: reportsTable.category,
-        urgency: reportsTable.urgency,
-        summary: reportsTable.summary,
-        suggested_action: reportsTable.suggested_action,
-        confidence: reportsTable.confidence,
-        status: reportsTable.status,
-        created_at: reportsTable.created_at,
-        updated_at: reportsTable.updated_at,
-        user: {
-          id: usersTable.id,
-          name: usersTable.name,
-          contact: usersTable.contact,
-          role: usersTable.role,
-        },
-      })
-      .from(reportsTable)
-      .leftJoin(usersTable, eq(reportsTable.user, usersTable.id))
-      .where(filters.length > 0 ? and(...filters) : undefined);
+      if (!success) {
+        throw new ApiError(
+          400,
+          getSystemCustomErrorMsgByKey("GET_REPORT_BY_QUERY_PAYLOAD_ERROR")!,
+          "",
+          [z4.flattenError(error)]
+        );
+      }
 
-    // Don't return an error here. During filtering,
-    // having no matching products is a valid result, not an error.
-    return res.status(200).json(new ApiResponse(200, "OK", reports));
+      const params = new URLSearchParams();
+      if (data.category) params.set('category', data.category);
+      if (data.urgency) params.set('urgency', data.urgency);
+      if (data.page) params.set("page", String(data.page) )
+
+      await mcpClient.connect(transport);
+      const query_str = params.toString();
+      const { contents } = await mcpClient.readResource({ uri: `reports://all${query_str ? '?' + query_str : ''}`, });
+
+      console.log("content here", contents)
+      const valid_data = convertToValidJson((contents[0] as { text: string }).text)
+
+      // Don't return an error here. During filtering,
+      // having no matching products is a valid result, not an error.
+      return res.status(200).json(new ApiResponse(200, "OK", valid_data));
+
   }
 
   async getReportById(req: Request, res: Response) {
@@ -361,7 +346,7 @@ export class ReportController {
   async getReportsAnalyticsSummary(req: Request, res: Response) {
 
     // Check if user pass specific model_crn
-    const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string
+    // const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string
 
     // Check if there is any cache based on the user ip
     await connectRedis()
@@ -372,75 +357,108 @@ export class ReportController {
       return res.status(200).json(new ApiResponse(200, message ? `OK with WARNING: ${message}` : "OK", cache_result));
     }
 
-    await mcpClient.connect(transport);
+    /**
+     * If you wanna use AI follow this
+     */
+    // await mcpClient.connect(transport);
 
-    const { contents } = await mcpClient.readResource({ uri: "reports://all" });
+    // const { contents } = await mcpClient.readResource({ uri: "reports://all" });
 
-    if (!contents[0]) {
-      throw new ApiError(
-        400,
-        getSystemCustomErrorMsgByKey("RESOURCE_NOT_FOUND")!
-      );
+    // if (!contents[0]) {
+    //   throw new ApiError(
+    //     400,
+    //     getSystemCustomErrorMsgByKey("RESOURCE_NOT_FOUND")!
+    //   );
+    // }
+
+    // const resource_text = (contents[0] as { text: string }).text;
+
+    // if (!resource_text) {
+    //   throw new ApiError(
+    //     400,
+    //     getSystemCustomErrorMsgByKey("RESOURCE_NOT_FOUND")!
+    //   );
+    // }
+
+    // const data = JSON.parse(resource_text);
+
+    // const { text } = await generateText({
+    //   model: groq(model_crn ?? "openai/gpt-oss-20b"),
+    //   instructions: `You are an incident report analytics engine.
+
+    //                          You have access to the following incident report data:
+
+    //                          ${JSON.stringify(data)}
+
+    //                          Analyze the data and return ONLY a JSON object with this exact shape, no other text, no markdown formatting, no code fences:
+
+    //                          {
+    //                             "totalReports": number,
+    //                             "criticalReports": number,
+    //                             "pendingReports": number,
+    //                             "resolvedReports": number,
+    //                             "categoryBreakdown": {
+    //                                 "fire": number,
+    //                                 "medical": number,
+    //                                 "flood": number,
+    //                                 "utility": number
+    //                             },
+    //                             "urgencyBreakdown": {
+    //                                 "low": number,
+    //                                 "medium": number,
+    //                                 "high": number,
+    //                                 "critical": number
+    //                             }
+    //                          }
+
+    //                          Rules:
+    //                          - "criticalReports" counts reports where urgency is "CRITICAL".
+    //                          - "pendingReports" counts reports where status is "PENDING".
+    //                          - "resolvedReports" counts reports where status is "RESOLVED".
+    //                          - "categoryBreakdown" and "urgencyBreakdown" must count every report, grouped by their respective field.
+    //                          - If a category or urgency value has zero reports, still include it with value 0.
+    //                          - Return valid JSON only — no explanations, no prose, no markdown code blocks.`,
+    //   messages: [
+    //     {
+    //       role: "user",
+    //       content: "Give me the current report statistics.",
+    //     },
+    //   ],
+    // });
+
+
+
+    const preparedReport = await getPreparedReportStats()
+    const [result] = await preparedReport.execute()
+    if (!result) {
+      return res.status(200).json(new ApiResponse(200, "No stats", null));
     }
 
-    const resource_text = (contents[0] as { text: string }).text;
-
-    if (!resource_text) {
-      throw new ApiError(
-        400,
-        getSystemCustomErrorMsgByKey("RESOURCE_NOT_FOUND")!
-      );
+    const data = {
+      totalReports: result.totalReports,
+      criticalReports: result.criticalReports,
+      pendingReports: result.pendingReports,
+      resolvedReports: result.resolvedReports,
+      categoryBreakdown: {
+        fire: result.fire,
+        medical: result.medical,
+        flood: result.flood,
+        utility: result.utility,
+        accident: result.accident,
+        crime: result.crime,
+        publicService: result.publicService,
+        infrastructure: result.infrastructure,
+        other: result.other,
+      },
+      urgencyBreakdown: {
+        low: result.low,
+        medium: result.medium,
+        high: result.high,
+        critical: result.critical,
+      },
     }
 
-    const data = JSON.parse(resource_text);
-
-    const { text } = await generateText({
-      model: groq(model_crn ?? "openai/gpt-oss-20b"),
-      instructions: `You are an incident report analytics engine.
- 
-                             You have access to the following incident report data:
- 
-                             ${JSON.stringify(data)}
- 
-                             Analyze the data and return ONLY a JSON object with this exact shape, no other text, no markdown formatting, no code fences:
- 
-                             {
-                                "totalReports": number,
-                                "criticalReports": number,
-                                "pendingReports": number,
-                                "resolvedReports": number,
-                                "categoryBreakdown": {
-                                    "fire": number,
-                                    "medical": number,
-                                    "flood": number,
-                                    "utility": number
-                                },
-                                "urgencyBreakdown": {
-                                    "low": number,
-                                    "medium": number,
-                                    "high": number,
-                                    "critical": number
-                                }
-                             }
- 
-                             Rules:
-                             - "criticalReports" counts reports where urgency is "CRITICAL".
-                             - "pendingReports" counts reports where status is "PENDING".
-                             - "resolvedReports" counts reports where status is "RESOLVED".
-                             - "categoryBreakdown" and "urgencyBreakdown" must count every report, grouped by their respective field.
-                             - If a category or urgency value has zero reports, still include it with value 0.
-                             - Return valid JSON only — no explanations, no prose, no markdown code blocks.`,
-      messages: [
-        {
-          role: "user",
-          content: "Give me the current report statistics.",
-        },
-      ],
-    });
-
-    const valid_model_output = convertToValidJson(text);
-    await reportsRedis.cacheReportAnalytics(req.clientIp as string, valid_model_output)
-
-    return res.status(200).json(new ApiResponse(200, "OK", valid_model_output));
+    await reportsRedis.cacheReportAnalytics(req.clientIp as string, data)
+    return res.status(200).json(new ApiResponse(200, "OK", data));
   }
 }
