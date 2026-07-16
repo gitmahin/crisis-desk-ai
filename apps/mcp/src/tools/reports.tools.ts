@@ -4,8 +4,9 @@ import {
   type McpServer,
   type ReadResourceCallback,
   type ResourceLink,
+  type ServerContext,
 } from "@modelcontextprotocol/server";
-import { reportZSchema } from "@repo/zod";
+import { reportZSchema, type CreateReportPayloadType } from "@repo/zod";
 import { REPORT_PREDICTION_PROMPT } from "@/constant-prompts";
 import {
   reportsTable,
@@ -21,11 +22,17 @@ import { convertToValidJson } from "@repo/shared";
 import { McpRegistrar } from "@/blueprints";
 import { baseConfig } from "@/config";
 import { groq } from "@/lib/ai-models";
+import { asyncToolHandler } from "@/lib";
+import { MCPToolException } from "@/lib/exception-handlers";
+import { MCPToolResponse } from "@/lib/tool-response";
+
+
 
 export class ReportTools extends McpRegistrar {
+  static CREATE_NEW_REPORT = "create-new-report"
   registerCreateReport() {
     this.server.registerTool(
-      "create-new-report",
+      ReportTools.CREATE_NEW_REPORT,
       {
         title: "Create new report",
         description: "Create new report based on the given value.",
@@ -41,14 +48,25 @@ export class ReportTools extends McpRegistrar {
           report_id: z4.string().nullable(),
         }),
       },
-      async (payload) => {
-        const { contact, description, language, location, name } = payload;
+      asyncToolHandler(createReportTool)
+    );
+  }
 
-        // Sampling is deprecated. So we have to call LLM directly
-        const { text } = await generateText({
-          model: groq("openai/gpt-oss-20b"),
+  init() {
+    this.registerCreateReport();
+  }
+}
 
-          prompt: `You are an emergency incident classification AI.
+
+const createReportTool = async (payload: CreateReportPayloadType, ctx: ServerContext) => {
+
+  const { contact, description, language, location, name } = payload;
+
+  // Sampling is deprecated. So we have to call LLM directly
+  const { text } = await generateText({
+    model: groq("openai/gpt-oss-20b"),
+
+    prompt: `You are an emergency incident classification AI.
                             Analyze the incident report below and classify it.
 
                             Input:
@@ -59,90 +77,60 @@ export class ReportTools extends McpRegistrar {
                             - Language: ${language}
 
                             ${REPORT_PREDICTION_PROMPT}`,
-        });
+  });
 
-        if (!text) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: "AI classification failed. Please try again!",
-              },
-            ],
-            isError: true,
-          };
-        }
+  if (!text) {
 
-        try {
-          const predicted_data: Pick<
-            PgReportsSelectType,
-            | "confidence"
-            | "category"
-            | "suggested_action"
-            | "urgency"
-            | "summary"
-          > = convertToValidJson(text);
+    throw new MCPToolException("AI classification failed. Please try again!", ReportTools.CREATE_NEW_REPORT)
+  }
 
-          const [user_id, report_id] = await postgres.transaction(
-            async (tx) => {
-              const [user] = await tx
-                .insert(usersTable)
-                .values({
-                  name: name,
-                  contact: contact,
-                })
-                .returning();
 
-              if (!user) {
-                tx.rollback();
-              }
+  const predicted_data: Pick<
+    PgReportsSelectType,
+    | "confidence"
+    | "category"
+    | "suggested_action"
+    | "urgency"
+    | "summary"
+  > = convertToValidJson(text);
 
-              const [report] = await tx
-                .insert(reportsTable)
-                .values({
-                  user: user?.id,
-                  description: description,
-                  location: location,
-                  language: String(language).toUpperCase(),
-                  category: String(predicted_data.category).toUpperCase(),
-                  confidence: predicted_data.confidence,
-                  suggested_action: predicted_data.suggested_action,
-                  urgency: String(predicted_data.urgency).toUpperCase(),
-                  summary: predicted_data.summary,
-                })
-                .returning();
+  const [user_id, report_id] = await postgres.transaction(
+    async (tx) => {
+      const [user] = await tx
+        .insert(usersTable)
+        .values({
+          name: name,
+          contact: contact,
+        })
+        .returning();
 
-              return [String(user?.id), String(report?.id)];
-            }
-          );
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: "Report has been submitted successfully",
-              },
-            ],
-
-            structuredContent: { user_id, report_id },
-          };
-        } catch (error) {
-          console.error(error);
-          return {
-            content: [
-              {
-                type: "text",
-                text: "Failed to submit report!",
-              },
-            ],
-            isError: true,
-          };
-        }
+      if (!user) {
+        tx.rollback();
+        throw new MCPToolException("User not created", ReportTools.CREATE_NEW_REPORT)
       }
-    );
-  }
 
-  init() {
-    this.registerCreateReport();
-  }
+      const [report] = await tx
+        .insert(reportsTable)
+        .values({
+          user: user.id,
+          description: description,
+          location: location,
+          language: String(language).toUpperCase(),
+          category: String(predicted_data.category).toUpperCase(),
+          confidence: predicted_data.confidence,
+          suggested_action: predicted_data.suggested_action,
+          urgency: String(predicted_data.urgency).toUpperCase(),
+          summary: predicted_data.summary,
+        })
+        .returning();
+
+      return [String(user?.id), String(report?.id)];
+    }
+  );
+
+  return new MCPToolResponse(
+    "Report has been submitted successfully",
+    { user_id, report_id }
+  ).toObject();
+
 }

@@ -1,4 +1,4 @@
-import { createFingerprint, postgres } from "@/libs";
+import { postgres } from "@/libs";
 import { reportsTable, usersTable } from "@repo/database";
 import {
   validateWithZod,
@@ -24,6 +24,7 @@ import { MODEL_CRN_HEADER_KEY } from "@repo/constants"
 import { connectRedis } from "@/libs/redis";
 import { reportsRedis } from "@/redis";
 import { hash } from "node:crypto";
+import { v4 as uuidv4 } from "uuid"
 
 type DuplicateResponseDataType = {
   possibleDuplicate: boolean;
@@ -31,14 +32,12 @@ type DuplicateResponseDataType = {
 };
 
 export class ReportController {
-  static getModelCrn(header: Request["header"]) {
-    return header(MODEL_CRN_HEADER_KEY)
-  }
+
 
   async createReport(req: Request, res: Response) {
     const payload = req.body;
 
-    const model_crn = ReportController.getModelCrn(req.header)
+    const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string
 
     const { data, success, error } = validateWithZod(
       payload,
@@ -158,6 +157,7 @@ export class ReportController {
       .json(
         new ApiResponse(
           201,
+          // @ts-ignore
           text || toolResult?.content[0]?.text || "No response from AI",
           toolResult?.structuredContent
         )
@@ -223,6 +223,7 @@ export class ReportController {
 
     if (data.category)
       filters.push(
+        // @ts-ignore
         eq(reportsTable.category, String(data.category).toUpperCase())
       );
     if (data.urgency)
@@ -360,18 +361,15 @@ export class ReportController {
   async getReportsAnalyticsSummary(req: Request, res: Response) {
 
     // Check if user pass specific model_crn
-    const model_crn = ReportController.getModelCrn(req.header)
+    const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string
 
     // Check if there is any cache based on the user ip
-    const hash_key = createFingerprint(req)
-    const short_hash_key = hash_key.slice(0, 20)
     await connectRedis()
 
-    const cache_result = await reportsRedis.getCachedReportAnalytics(short_hash_key)
-    // const [result] = await reportsRedis.cacheReportAnalytics(hash_key, {})
+    const [cache_result, message] = await reportsRedis.getCachedReportAnalytics(req.clientIp as string)
 
     if (cache_result) {
-      return res.status(200).json(new ApiResponse(200, "OK", JSON.parse(cache_result)));
+      return res.status(200).json(new ApiResponse(200, message ? `OK with WARNING: ${message}` : "OK", cache_result));
     }
 
     await mcpClient.connect(transport);
@@ -441,7 +439,7 @@ export class ReportController {
     });
 
     const valid_model_output = convertToValidJson(text);
-    await reportsRedis.cacheReportAnalytics(hash_key, valid_model_output)
+    await reportsRedis.cacheReportAnalytics(req.clientIp as string, valid_model_output)
 
     return res.status(200).json(new ApiResponse(200, "OK", valid_model_output));
   }
