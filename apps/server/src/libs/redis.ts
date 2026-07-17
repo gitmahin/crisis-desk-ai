@@ -1,6 +1,6 @@
 import { RedisConfig } from "@/config";
 import type { RedisClientType } from "redis"
-import { createRedisClient } from "@repo/shared";
+import { createRedisClient, ReportsRedis } from "@repo/shared";
 
 
 export const redisClient: RedisClientType = createRedisClient(RedisConfig.REDIS_USERNAME, RedisConfig.REDIS_PASS, RedisConfig.REDIS_HOST, Number(RedisConfig.REDIS_PORT))
@@ -20,3 +20,7 @@ export async function connectRedis() {
     await redisClient.connect();
   }
 }
+
+
+// Redis instances
+export const reportRedis = new ReportsRedis(redisClient)

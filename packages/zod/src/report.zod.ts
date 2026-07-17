@@ -33,7 +33,7 @@ class ReportZSchema {
     language: z4
       .enum(SUPPORTED_LANGUAGES)
       .nonoptional({ error: "Language is required!" }),
-    model_crn: z4.string({error: "Invalid model crn!"}).max(255, {error: "Model crn is too long!"}).optional()
+    model_crn: z4.string({ error: "Invalid model crn!" }).max(255, { error: "Model crn is too long!" }).optional()
   });
 
   getReportById = z4.object({
@@ -46,9 +46,23 @@ class ReportZSchema {
     page: z4.string().optional()
   });
 
-  updateReportStatus = z4.object({
+  updateReport = z4.object({
     id: ReportZSchema.id,
-    status: z4.enum(REPORT_STATUS),
+    location: z4.string().max(255).optional(),
+    geo_location: z4
+      .object({
+        lat: z4.number(),
+        lng: z4.number(),
+      })
+      .optional(),
+    language: z4.enum(SUPPORTED_LANGUAGES).optional(),
+    description: z4.string().max(500).optional(),
+    category: z4.enum(REPORT_CATEGORY).optional(),
+    urgency: z4.enum(REPORT_URGENCY).optional(),
+    summary: z4.string().optional(),
+    suggested_action: z4.string().optional(),
+    confidence: z4.coerce.number().min(0).max(1).optional(),
+    status: z4.enum(REPORT_STATUS).optional(),
   });
 }
 
@@ -65,5 +79,5 @@ export type GetReportByQueryParamsPayloadType = z4.infer<
   typeof reportZSchema.getReportByQueryParams
 >;
 export type UpdateReportPayloadType = z4.infer<
-  typeof reportZSchema.updateReportStatus
+  typeof reportZSchema.updateReport
 >;

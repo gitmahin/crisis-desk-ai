@@ -1,44 +1,32 @@
-import {
-  oauthMetadataResponse,
-  type ListResourcesCallback,
-  type McpServer,
-  type ReadResourceCallback,
-  type ResourceLink,
-  type ServerContext,
-} from "@modelcontextprotocol/server";
-import { reportZSchema, type CreateReportPayloadType } from "@repo/zod";
+import { reportZSchema, type CreateReportPayloadType, type GetReportByIdPayloadType, type UpdateReportPayloadType } from "@repo/zod";
 import { REPORT_PREDICTION_PROMPT } from "@/constant-prompts";
 import {
   reportsTable,
   usersTable,
   type PgReportsSelectType,
-  type PgUserSelectType
 } from "@repo/database";
 import { postgres } from "@/lib/db.connect";
-import z4 from "zod/v4";
 import { generateText } from "ai";
-
 import { eq } from "drizzle-orm";
-import { ApiError, convertToValidJson, getSystemCustomErrorMsgByKey } from "@repo/shared";
+import { convertToValidJson, ReportsRedis, SystemCustomErrorCode, validateWithZod } from "@repo/shared";
 import { McpRegistrar } from "@/blueprints";
-import { baseConfig } from "@/config";
 import { groq } from "@/lib/ai-models";
 import { asyncToolHandler } from "@/lib";
-
 import { MCPToolResponse } from "@/lib/tool-response";
 import { MCPToolException } from "@/lib/exceptions-handlers";
-import { connectRedis } from "@/lib/redis";
-import { reportRedis } from "@/redis/report.redis";
+import { connectRedis, redisClient, reportRedis } from "@/lib/redis";
 
 
 
 export class ReportTools extends McpRegistrar {
   static CREATE_NEW_REPORT = "create-new-report"
+  static UPDATE_REPORT = "update-report"
+  static DELETE_REPORT = "delete-report"
   registerCreateReport() {
     this.server.registerTool(
       ReportTools.CREATE_NEW_REPORT,
       {
-        title: "Create new report",
+        title: "Create New Incident Report",
         description: "Create new report based on the given value.",
         inputSchema: reportZSchema.createReport,
         annotations: {
@@ -52,13 +40,53 @@ export class ReportTools extends McpRegistrar {
     );
   }
 
+  registerUpdateReport() {
+    this.server.registerTool(
+      ReportTools.UPDATE_REPORT,
+      {
+        title: "Update Incident Report",
+        description:
+          "Updates an existing incident report by its ID. You can modify fields such as the location, description, category, language, urgency, status, summary, suggested action, confidence, or geographic location.",
+        inputSchema: reportZSchema.updateReport,
+        annotations: {
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+          readOnlyHint: false,
+        }
+      },
+      asyncToolHandler(updateReportTool)
+    );
+  }
+
+  registerDeleteReport() {
+    this.server.registerTool(
+      ReportTools.DELETE_REPORT,
+      {
+        title: "Delete Incident Report",
+        description:
+          "Deletes an existing incident report identified by its ID. Use this operation only when the report should be permanently removed.",
+        inputSchema: reportZSchema.getReportById,
+        annotations: {
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+          readOnlyHint: false,
+        }
+      },
+      asyncToolHandler(deleteReportTool)
+    );
+  }
+
+
   init() {
     this.registerCreateReport();
+    this.registerUpdateReport()
   }
 }
 
 
-const createReportTool = async (payload: CreateReportPayloadType, ctx: ServerContext) => {
+const createReportTool = async (payload: CreateReportPayloadType) => {
 
   const { contact, description, language, location, name } = payload;
 
@@ -111,6 +139,7 @@ const createReportTool = async (payload: CreateReportPayloadType, ctx: ServerCon
       const [report] = await tx
         .insert(reportsTable)
         .values({
+          // @ts-ignore
           user: db_user!.id,
           description: description,
           location: location,
@@ -120,6 +149,7 @@ const createReportTool = async (payload: CreateReportPayloadType, ctx: ServerCon
           suggested_action: predicted_data.suggested_action,
           urgency: String(predicted_data.urgency).toUpperCase(),
           summary: predicted_data.summary,
+
         })
         .returning();
 
@@ -136,4 +166,74 @@ const createReportTool = async (payload: CreateReportPayloadType, ctx: ServerCon
     { user_id, report_id }
   ).toObject();
 
+}
+
+const updateReportTool = async (payload: UpdateReportPayloadType) => {
+  const { data, success, error } = validateWithZod(
+    payload,
+    reportZSchema.updateReport
+  );
+
+  if (!success) {
+    throw new Error("Error updating the report. Verify that the report ID exists and that all provided input values are valid.", {
+      cause: error
+    })
+
+  }
+
+  const updateData = {
+    location: data.location,
+    geo_location: data.geo_location,
+    language: data.language,
+    description: data.description,
+    category: data.category,
+    urgency: data.urgency,
+    summary: data.summary,
+    suggested_action: data.suggested_action,
+    confidence: data.confidence,
+    status: data.status,
+  };
+
+  // Remove undefined values so they aren't included in the UPDATE
+  const updates = Object.fromEntries(
+    Object.entries(updateData).filter(([, value]) => value !== undefined)
+  );
+
+  const [updatedReport] = await postgres
+    .update(reportsTable)
+    .set(updates)
+    .where(eq(reportsTable.id, data.id))
+    .returning();
+  if (!updatedReport) {
+    throw new MCPToolException("Couldn't update the report", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
+  }
+
+  return new MCPToolResponse("Report Updated.", updatedReport).toObject();
+}
+
+const deleteReportTool = async (payload: GetReportByIdPayloadType) => {
+  const { data, success, error } = validateWithZod(
+    payload,
+    reportZSchema.getReportById
+  );
+
+  if (!success) {
+    throw new Error("The report ID provided is invalid.", {
+      cause: error
+    })
+  }
+
+  const [deletedReport] = await postgres
+    .delete(reportsTable)
+    .where(eq(reportsTable.id, data.id))
+    .returning();
+
+  await connectRedis()
+  await reportRedis.deleteSingleReportCache(data.id)
+
+  if (!deletedReport) {
+    throw new MCPToolException("No report was found with the provided ID. Please check the identifier and try again.", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
+  }
+
+  return new MCPToolResponse("Report deleted successfully.", deletedReport.id).toObject();
 }

@@ -1,4 +1,5 @@
-import { postgres } from "@/libs";
+
+import { postgres } from "@/lib/db.connect";
 import { reportsTable } from "@repo/database";
 import { sql } from "drizzle-orm";
 

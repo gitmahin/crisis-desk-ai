@@ -1,6 +1,6 @@
 import { AuthConfig } from "@/config";
 import { postgres } from "@/libs";
-import { userRedisService } from "@/redis/user.redis";
+import { userRedisService } from "@/redis-a/user.redis";
 import {
   ACCESS_TOKEN_EXPIRY_SEC,
   CookieService,

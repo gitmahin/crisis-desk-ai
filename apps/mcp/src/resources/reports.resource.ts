@@ -5,9 +5,11 @@ import { McpRegistrar } from "@/blueprints";
 import { MCPResourceResponse } from "@/lib/resource-response";
 import { asyncResourceHandler } from "@/lib";
 import { ResourceTemplate } from "@modelcontextprotocol/server";
-import { reportRedis } from "@/redis/report.redis";
-import { connectRedis } from "@/lib/redis";
+import { reportRedis } from "@/lib/redis";
+import { connectRedis} from "@/lib/redis";
 import { MCPResourceException } from "@/lib/exceptions-handlers";
+import { getPreparedReportStats } from "@/prepared-statements";
+import { SystemCustomErrorCode } from "@repo/shared";
 
 export class ReportResources extends McpRegistrar {
   registerAllReports() {
@@ -39,9 +41,26 @@ export class ReportResources extends McpRegistrar {
       asyncResourceHandler(getReportBySpecificId)
     );
   }
+
+  registerGetReportAnalytics() {
+    this.server.registerResource(
+      "get-report-analytics",
+      new ResourceTemplate('reports://analytics', { list: undefined }),
+      {
+        title: "Get Incident Report Analytics",
+        description:
+          "Returns aggregated analytics for incident reports, including report counts, category and status distributions, urgency levels, reporting trends, and other summary metrics for monitoring and operational insights.",
+        mimeType: "application/json",
+      },
+      asyncResourceHandler(getReportAnalyticsSummary)
+    );
+  }
+
+
   init() {
     this.registerAllReports();
     this.registerGetReportById();
+    this.registerGetReportAnalytics();
   }
 }
 
@@ -50,23 +69,16 @@ const allReports = async (uri: URL, variables: any) => {
   const category = variables.category !== 'none' ? variables.category : undefined;
   const urgency = variables.urgency !== 'none' ? variables.urgency : undefined;
 
-
   console.log(`page: ${page} | cat: ${category} | urgency: ${urgency}`)
-
 
   const limit = 20;
   const offset = (page - 1) * limit;
-  const cache_key = "reports:" + page + ":"
 
-  const cache_keys = Array.from({ length: limit }).map((item, i) => cache_key + i)
-  console.log("cache keys", cache_keys)
   await connectRedis()
-  const cache_reports = await reportRedis.getNReports(cache_keys)
+  const cache_reports = await reportRedis.getNReports(page)
 
-  const hits = cache_reports.filter((r): r is string => r != null)
-
-  if (hits.length > 0) {
-    const parsed = hits.map((r) => JSON.parse(r))
+  if (cache_reports.length > 0) {
+    const parsed = cache_reports.map((r) => JSON.parse(r as string))
     return new MCPResourceResponse(uri.href, JSON.stringify(parsed)).toObject()
   }
 
@@ -114,11 +126,8 @@ const allReports = async (uri: URL, variables: any) => {
 
   console.log("reports here", reports)
 
-
-
   await connectRedis()
-  const cache_data: [string, string][] = reports.map((item, i) => [cache_key + i, JSON.stringify(item)]);
-  await reportRedis.cacheNReports(cache_data, 10)
+  await reportRedis.cacheNReports(reports, page, 10)
 
   if (reports.length > 0) {
     return new MCPResourceResponse(uri.href, JSON.stringify(reports)).toObject()
@@ -161,10 +170,43 @@ const getReportBySpecificId = async (uri: URL, variables: any) => {
 
   const [result] = await prepareGetReportById.execute({ id: id });
 
-  if(!result) {
-    throw new MCPResourceException("Report not found with the specific id.", uri.href)
+  if (!result) {
+    throw new MCPResourceException("Report not found with the specific id.", uri.href, SystemCustomErrorCode.REPORT_NOT_FOUND)
   }
 
   return new MCPResourceResponse(uri.href, JSON.stringify(result)).toObject()
+}
 
+const getReportAnalyticsSummary = async (uri: URL) => {
+  const preparedReport = await getPreparedReportStats()
+  const [result] = await preparedReport.execute()
+  if (!result) {
+    throw new MCPResourceException("No stats.", uri.href)
+  }
+
+  const data = {
+    totalReports: result.totalReports,
+    criticalReports: result.criticalReports,
+    pendingReports: result.pendingReports,
+    resolvedReports: result.resolvedReports,
+    categoryBreakdown: {
+      fire: result.fire,
+      medical: result.medical,
+      flood: result.flood,
+      utility: result.utility,
+      accident: result.accident,
+      crime: result.crime,
+      publicService: result.publicService,
+      infrastructure: result.infrastructure,
+      other: result.other,
+    },
+    urgencyBreakdown: {
+      low: result.low,
+      medium: result.medium,
+      high: result.high,
+      critical: result.critical,
+    },
+  }
+
+  return new MCPResourceResponse(uri.href, JSON.stringify(data)).toObject()
 }

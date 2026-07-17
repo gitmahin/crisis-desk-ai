@@ -22,10 +22,9 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types";
 import { groq } from "@/libs/ai-models";
 import { MODEL_CRN_HEADER_KEY } from "@repo/constants"
 import { connectRedis } from "@/libs/redis";
-import { reportsRedis } from "@/redis";
+import { reportsRedis } from "@/redis-a";
 import { hash } from "node:crypto";
 import { v4 as uuidv4 } from "uuid"
-import { getPreparedReportStats } from "@/queries";
 
 type DuplicateResponseDataType = {
   possibleDuplicate: boolean;
@@ -146,6 +145,7 @@ export class ReportController {
       model: groq(model_crn ?? "openai/gpt-oss-20b"),
       prompt: `Create new report with the following payload: ${JSON.stringify(data)}`,
       tools: groqTools,
+      
     });
 
     // @ts-ignore

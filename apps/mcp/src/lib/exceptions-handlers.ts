@@ -4,8 +4,8 @@ import { MCPErrorResponse } from "@/helpers";
 import { CustomDrizzleErrorMessage } from "@repo/shared";
 
 export class MCPToolException extends MCPException {
-    constructor(message: string, toolName: string) {
-        super(message, "TOOL_ERROR");
+    constructor(message: string, toolName: string, errorCode?: string) {
+        super(message, errorCode ?? "TOOL_ERROR");
         this.addContext("toolName", toolName);
     }
 
@@ -15,8 +15,8 @@ export class MCPToolException extends MCPException {
 }
 
 export class MCPResourceException extends MCPException {
-    constructor(message: string, resourceUri: string) {
-        super(message, "RESOURCE_ERROR");
+    constructor(message: string, resourceUri: string, errorCode?: string) {
+        super(message, errorCode ?? "RESOURCE_ERROR");
         this.addContext("resourceUri", resourceUri);
     }
 
