@@ -43,7 +43,7 @@ class ReportZSchema {
   getReportByQueryParams = z4.object({
     category: z4.enum(REPORT_CATEGORY).optional(),
     urgency: z4.enum(REPORT_URGENCY).optional(),
-    page: z4.number().optional()
+    page: z4.string().optional()
   });
 
   updateReportStatus = z4.object({

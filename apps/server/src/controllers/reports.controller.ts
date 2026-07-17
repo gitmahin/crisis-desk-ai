@@ -212,38 +212,39 @@ export class ReportController {
   }
 
   async getAllReports(req: Request, res: Response) {
- 
-      const queryParams = req.query;
 
-      const { data, success, error } = validateWithZod(
-        queryParams,
-        reportZSchema.getReportByQueryParams
+    const queryParams = req.query;
+
+    const { data, success, error } = validateWithZod(
+      queryParams,
+      reportZSchema.getReportByQueryParams
+    );
+
+    if (!success) {
+      throw new ApiError(
+        400,
+        getSystemCustomErrorMsgByKey("GET_REPORT_BY_QUERY_PAYLOAD_ERROR")!,
+        "",
+        [z4.flattenError(error)]
       );
+    }
 
-      if (!success) {
-        throw new ApiError(
-          400,
-          getSystemCustomErrorMsgByKey("GET_REPORT_BY_QUERY_PAYLOAD_ERROR")!,
-          "",
-          [z4.flattenError(error)]
-        );
-      }
+    const params = new URLSearchParams();
 
-      const params = new URLSearchParams();
-      if (data.category) params.set('category', data.category);
-      if (data.urgency) params.set('urgency', data.urgency);
-      if (data.page) params.set("page", String(data.page) )
+    if (data?.category) params.set('category', data.category);
+    if (data?.urgency) params.set('urgency', data.urgency);
+    if (data?.page) params.set("page", String(data.page))
 
-      await mcpClient.connect(transport);
-      const query_str = params.toString();
-      const { contents } = await mcpClient.readResource({ uri: `reports://all${query_str ? '?' + query_str : ''}`, });
+    await mcpClient.connect(transport);
+    const uri = `reports://all/${data?.page ?? 1}/${data?.category ?? 'none'}/${data?.urgency ?? 'none'}`;
+    const { contents } = await mcpClient.readResource({ uri: uri });
 
-      console.log("content here", contents)
-      const valid_data = convertToValidJson((contents[0] as { text: string }).text)
+    console.log("content here", contents)
+    const valid_data = convertToValidJson((contents[0] as { text: string }).text)
 
-      // Don't return an error here. During filtering,
-      // having no matching products is a valid result, not an error.
-      return res.status(200).json(new ApiResponse(200, "OK", valid_data));
+    // Don't return an error here. During filtering,
+    // having no matching products is a valid result, not an error.
+    return res.status(200).json(new ApiResponse(200, "OK", valid_data));
 
   }
 
@@ -267,41 +268,15 @@ export class ReportController {
       );
     }
 
-    const prepareGetReportById = postgres
-      .select({
-        id: reportsTable.id,
-        location: reportsTable.location,
-        geo_location: reportsTable.geo_location,
-        language: reportsTable.language,
-        description: reportsTable.description,
-        category: reportsTable.category,
-        urgency: reportsTable.urgency,
-        summary: reportsTable.summary,
-        suggested_action: reportsTable.suggested_action,
-        confidence: reportsTable.confidence,
-        status: reportsTable.status,
-        created_at: reportsTable.created_at,
-        updated_at: reportsTable.updated_at,
-        user: {
-          id: usersTable.id,
-          name: usersTable.name,
-          contact: usersTable.contact,
-          role: usersTable.role,
-        },
-      })
-      .from(reportsTable)
-      .leftJoin(usersTable, eq(reportsTable.user, usersTable.id))
-      .where(eq(reportsTable.id, sql.placeholder("id")))
-      .prepare("get_report_by_id");
+    await mcpClient.connect(transport);
+    const uri = `reports://all/id/${data?.id}`;
+    const { contents } = await mcpClient.readResource({ uri: uri });
 
-    const [result] = await prepareGetReportById.execute({ id: data.id });
-    if (!result) {
-      throw new ApiError(
-        400,
-        getSystemCustomErrorMsgByKey("REPORT_NOT_FOUND")!
-      );
-    }
-    return res.status(200).json(new ApiResponse(200, "OK", result));
+    console.log("here is the content: ")
+
+    const valid_data = convertToValidJson((contents[0] as { text: string }).text)
+
+    return res.status(200).json(new ApiResponse(200, "OK", valid_data));
   }
 
   async deleteReportById(req: Request, res: Response) {
