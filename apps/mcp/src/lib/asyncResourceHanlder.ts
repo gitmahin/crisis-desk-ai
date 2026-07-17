@@ -3,13 +3,17 @@ import type { ReadResourceCallback, ReadResourceTemplateCallback } from "@modelc
 import { MCPException } from "@/blueprints";
 import { handleMCPError } from "./exceptions-handlers";
 
-export const asyncResourceHandler = (
-  requestHandlerFn: ReadResourceTemplateCallback
-): ReadResourceTemplateCallback => {
-  return ((...args: any[]) => {
-    return Promise.resolve((requestHandlerFn as any)(...args)).catch((error) => {
+type AnyResourceCallback = ReadResourceCallback | ReadResourceTemplateCallback;
 
-      console.log("Error here:", error)
+export function asyncResourceHandler<T extends AnyResourceCallback>(
+  requestHandlerFn: T
+): T {
+  return (async (...args: Parameters<T>) => {
+    try {
+      // @ts-expect-error - spreading generic args into the original fn
+      return await requestHandlerFn(...args);
+    } catch (error) {
+      console.log("Error here:", error);
       const errorResponse =
         error instanceof MCPException
           ? error.toErrorResponse()
@@ -18,13 +22,17 @@ export const asyncResourceHandler = (
       return {
         contents: [
           {
-            uri: args[0]?.toString?.() ?? "",
+            uri: (args[0] as any)?.toString?.() ?? "",
             text: errorResponse.message,
             mimeType: "application/json",
           },
         ],
+        // It will not show in sdk call.
+        _meta: {
+          error: errorResponse.toObject(),
+        },
         isError: true,
       };
-    });
-  }) as ReadResourceTemplateCallback;
-};
+    }
+  }) as T;
+}

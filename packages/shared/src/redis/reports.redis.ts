@@ -58,7 +58,9 @@ export class ReportsRedis implements IReportsRedis {
 
     async getNReports(page: number) {
         const reports_count = await this.redisClient.get(ReportsRedis.REPORTS_COUNT_CACHE_KEY)
-        const cache_keys = Array.from({ length: Number(reports_count) }).map((item, i) => ReportsRedis.REPORTS_CACHE_KEY + page + ":" + i)
+        const count = Number(reports_count) || 0;
+        if (count === 0) return [];
+        const cache_keys = Array.from({ length: count }).map((item, i) => ReportsRedis.REPORTS_CACHE_KEY + page + ":" + i)
         return await this.redisClient.mGet(cache_keys)
     }
 
@@ -116,7 +118,7 @@ export class ReportsRedis implements IReportsRedis {
             await this.redisClient.expire(analytics_report_key, ReportsRedis.REPORT_INVALID_BULK_REQUEST_EXPIRY)
         }
 
-        const message = ttl_num >= ReportsRedis.REPORT_ANALYTICS_EXPIRY ? `Request cached for ${ttl}s due to excessive repeated requests.` : `Normal: ${ttl} request count: ${request_count_num}`
+        const message = ttl_num >= ReportsRedis.REPORT_ANALYTICS_EXPIRY ? `Request cached for ${ttl}s due to excessive repeated requests.` : ""
         return [JSON.parse(analytics_report as unknown as string), message] // parse already stringified value
 
     }

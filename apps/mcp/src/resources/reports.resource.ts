@@ -4,9 +4,9 @@ import { and, eq, sql, SQL } from "drizzle-orm";
 import { McpRegistrar } from "@/blueprints";
 import { MCPResourceResponse } from "@/lib/resource-response";
 import { asyncResourceHandler } from "@/lib";
-import { ResourceTemplate } from "@modelcontextprotocol/server";
-import { reportRedis } from "@/lib/redis";
-import { connectRedis} from "@/lib/redis";
+import { ResourceTemplate, type ReadResourceCallback, type ReadResourceTemplateCallback } from "@modelcontextprotocol/server";
+import { redisClient, reportRedis } from "@/lib/redis";
+import { connectRedis } from "@/lib/redis";
 import { MCPResourceException } from "@/lib/exceptions-handlers";
 import { getPreparedReportStats } from "@/prepared-statements";
 import { SystemCustomErrorCode } from "@repo/shared";
@@ -45,7 +45,7 @@ export class ReportResources extends McpRegistrar {
   registerGetReportAnalytics() {
     this.server.registerResource(
       "get-report-analytics",
-      new ResourceTemplate('reports://analytics', { list: undefined }),
+      'reports://analytics',
       {
         title: "Get Incident Report Analytics",
         description:
@@ -64,7 +64,7 @@ export class ReportResources extends McpRegistrar {
   }
 }
 
-const allReports = async (uri: URL, variables: any) => {
+const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
   const page = Number(variables.page) || 1;
   const category = variables.category !== 'none' ? variables.category : undefined;
   const urgency = variables.urgency !== 'none' ? variables.urgency : undefined;
@@ -76,8 +76,8 @@ const allReports = async (uri: URL, variables: any) => {
 
   await connectRedis()
   const cache_reports = await reportRedis.getNReports(page)
-
-  if (cache_reports.length > 0) {
+  const cache_result = cache_reports.filter((r): r is string => r !== null);
+  if (cache_result.length > 0) {
     const parsed = cache_reports.map((r) => JSON.parse(r as string))
     return new MCPResourceResponse(uri.href, JSON.stringify(parsed)).toObject()
   }
@@ -127,7 +127,8 @@ const allReports = async (uri: URL, variables: any) => {
   console.log("reports here", reports)
 
   await connectRedis()
-  await reportRedis.cacheNReports(reports, page, 10)
+  console.log("redis response", await redisClient.ping())
+  await reportRedis.cacheNReports(reports, page, 30)
 
   if (reports.length > 0) {
     return new MCPResourceResponse(uri.href, JSON.stringify(reports)).toObject()
@@ -137,7 +138,7 @@ const allReports = async (uri: URL, variables: any) => {
   return new MCPResourceResponse(uri.href, JSON.stringify({})).toObject()
 }
 
-const getReportBySpecificId = async (uri: URL, variables: any) => {
+const getReportBySpecificId: ReadResourceTemplateCallback = async (uri, variables) => {
 
   const id = variables.id ?? ""
 
@@ -171,17 +172,17 @@ const getReportBySpecificId = async (uri: URL, variables: any) => {
   const [result] = await prepareGetReportById.execute({ id: id });
 
   if (!result) {
-    throw new MCPResourceException("Report not found with the specific id.", uri.href, SystemCustomErrorCode.REPORT_NOT_FOUND)
+    throw new MCPResourceException("Report not found with the specific id.", uri.href, SystemCustomErrorCode.REPORT_NOT_FOUND, 404)
   }
 
   return new MCPResourceResponse(uri.href, JSON.stringify(result)).toObject()
 }
 
-const getReportAnalyticsSummary = async (uri: URL) => {
+const getReportAnalyticsSummary: ReadResourceCallback = async (uri) => {
   const preparedReport = await getPreparedReportStats()
   const [result] = await preparedReport.execute()
   if (!result) {
-    throw new MCPResourceException("No stats.", uri.href)
+    throw new MCPResourceException("No stats.", uri.href, "", 404)
   }
 
   const data = {

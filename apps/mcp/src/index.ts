@@ -17,6 +17,7 @@ const handler = createMcpHandler(() => {
   // Register tools
   new ReportTools(server).init();
 
+
   // Register resources
   new ReportResources(server).init();
 

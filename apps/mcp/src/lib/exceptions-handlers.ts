@@ -4,29 +4,30 @@ import { MCPErrorResponse } from "@/helpers";
 import { CustomDrizzleErrorMessage } from "@repo/shared";
 
 export class MCPToolException extends MCPException {
-    constructor(message: string, toolName: string, errorCode?: string) {
-        super(message, errorCode ?? "TOOL_ERROR");
-        this.addContext("toolName", toolName);
-    }
+  constructor(message: string, toolName: string, errorCode?: string, status?: number) {
+    super(message, errorCode ?? "TOOL_ERROR", status);
+    this.addContext("toolName", toolName);
+  }
 
-    toErrorResponse(): MCPErrorResponse {
-        return new MCPErrorResponse(this.errorCode, this.message, this.context);
-    }
+  toErrorResponse(): MCPErrorResponse {
+    return new MCPErrorResponse(this.errorCode, this.message, this.context, this.status);
+  }
 }
 
 export class MCPResourceException extends MCPException {
-    constructor(message: string, resourceUri: string, errorCode?: string) {
-        super(message, errorCode ?? "RESOURCE_ERROR");
-        this.addContext("resourceUri", resourceUri);
-    }
+  constructor(message: string, resourceUri: string, errorCode?: string, status?: number) {
+    super(message, errorCode ?? "RESOURCE_ERROR", status);
+    this.addContext("resourceUri", resourceUri);
+  }
 
-    toErrorResponse(): MCPErrorResponse {
-        return new MCPErrorResponse(
-            this.errorCode,
-            `Resource access failed: ${this.message}`,
-            this.context
-        );
-    }
+  toErrorResponse(): MCPErrorResponse {
+    return new MCPErrorResponse(
+      this.errorCode,
+      `Resource access failed: ${this.message}`,
+      this.context,
+      this.status
+    );
+  }
 }
 
 

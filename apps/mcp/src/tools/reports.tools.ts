@@ -8,20 +8,21 @@ import {
 import { postgres } from "@/lib/db.connect";
 import { generateText } from "ai";
 import { eq } from "drizzle-orm";
-import { convertToValidJson, ReportsRedis, SystemCustomErrorCode, validateWithZod } from "@repo/shared";
+import { convertToValidJson, SystemCustomErrorCode } from "@repo/shared";
 import { McpRegistrar } from "@/blueprints";
 import { groq } from "@/lib/ai-models";
 import { asyncToolHandler } from "@/lib";
 import { MCPToolResponse } from "@/lib/tool-response";
 import { MCPToolException } from "@/lib/exceptions-handlers";
 import { connectRedis, redisClient, reportRedis } from "@/lib/redis";
+import { CREATE_NEW_REPORT_TOOL_NAME, DELETE_REPORT_TOOL_NAME, UPDATE_REPORT_TOOL_NAME } from "@repo/constants";
 
 
 
 export class ReportTools extends McpRegistrar {
-  static CREATE_NEW_REPORT = "create-new-report"
-  static UPDATE_REPORT = "update-report"
-  static DELETE_REPORT = "delete-report"
+  static CREATE_NEW_REPORT = CREATE_NEW_REPORT_TOOL_NAME
+  static UPDATE_REPORT = UPDATE_REPORT_TOOL_NAME
+  static DELETE_REPORT = DELETE_REPORT_TOOL_NAME
   registerCreateReport() {
     this.server.registerTool(
       ReportTools.CREATE_NEW_REPORT,
@@ -80,8 +81,9 @@ export class ReportTools extends McpRegistrar {
 
 
   init() {
-    this.registerCreateReport();
+    this.registerCreateReport()
     this.registerUpdateReport()
+    this.registerDeleteReport()
   }
 }
 
@@ -163,23 +165,14 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
 
   return new MCPToolResponse(
     "Report has been submitted successfully",
-    { user_id, report_id }
+    { user_id, report_id },
+    201
   ).toObject();
 
 }
 
 const updateReportTool = async (payload: UpdateReportPayloadType) => {
-  const { data, success, error } = validateWithZod(
-    payload,
-    reportZSchema.updateReport
-  );
-
-  if (!success) {
-    throw new Error("Error updating the report. Verify that the report ID exists and that all provided input values are valid.", {
-      cause: error
-    })
-
-  }
+const data = payload
 
   const updateData = {
     location: data.location,
@@ -208,21 +201,11 @@ const updateReportTool = async (payload: UpdateReportPayloadType) => {
     throw new MCPToolException("Couldn't update the report", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
   }
 
-  return new MCPToolResponse("Report Updated.", updatedReport).toObject();
+  return new MCPToolResponse("Report Updated.", updatedReport.id, 200).toObject();
 }
 
 const deleteReportTool = async (payload: GetReportByIdPayloadType) => {
-  const { data, success, error } = validateWithZod(
-    payload,
-    reportZSchema.getReportById
-  );
-
-  if (!success) {
-    throw new Error("The report ID provided is invalid.", {
-      cause: error
-    })
-  }
-
+  const data = payload
   const [deletedReport] = await postgres
     .delete(reportsTable)
     .where(eq(reportsTable.id, data.id))
@@ -232,8 +215,8 @@ const deleteReportTool = async (payload: GetReportByIdPayloadType) => {
   await reportRedis.deleteSingleReportCache(data.id)
 
   if (!deletedReport) {
-    throw new MCPToolException("No report was found with the provided ID. Please check the identifier and try again.", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
+    throw new MCPToolException("Cannot delete the report.", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
   }
 
-  return new MCPToolResponse("Report deleted successfully.", deletedReport.id).toObject();
+  return new MCPToolResponse("Report deleted successfully.", deletedReport.id, 200).toObject();
 }
