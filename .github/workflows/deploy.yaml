@@ -39,7 +39,7 @@ jobs:
                   VERSION=$(node -p "require('./package.json').version")
                   DEPL_ENV=$([ "$${{github.event.inputs.environment}}" = "production" ] && echo "" || echo "-dev")
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
-                  echo "mcp_app_name=$MCP_APP_NAME" >> $GITHUB_OUTPUT
+                  echo "mcp_app_name=$MCP_APP_NAME-crisis-desk-ai" >> $GITHUB_OUTPUT
 
                   if [[ "${{ env.TARGET_BRANCH }}" == "main" && "${{ github.event.inputs.release }}" == "latest" ]]; then
                       echo "IMAGE_TAG=latest$DEPL_ENV" >> $GITHUB_OUTPUT
