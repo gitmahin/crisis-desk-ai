@@ -11,12 +11,15 @@ import { eq } from "drizzle-orm";
 import { convertToValidJson, SystemCustomErrorCode } from "@repo/shared";
 import { McpRegistrar } from "@/blueprints";
 import { groq } from "@/lib/ai-models";
-import { asyncToolHandler } from "@/lib";
+import { asyncToolHandler, mongoConnect } from "@/lib";
 import { MCPToolResponse } from "@/lib/tool-response";
 import { MCPToolException } from "@/lib/exceptions-handlers";
 import { connectRedis, redisClient, reportRedis } from "@/lib/redis";
 import { CREATE_NEW_REPORT_TOOL_NAME, DELETE_REPORT_TOOL_NAME, UPDATE_REPORT_TOOL_NAME } from "@repo/constants";
-
+import { reportModel, type ReportSchemaType, type ReportType } from "@/models/report-model";
+import mongoose, { Schema } from "mongoose";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { reportEmbedding } from "@/rag";
 
 
 export class ReportTools extends McpRegistrar {
@@ -124,7 +127,7 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
     | "summary"
   > = convertToValidJson(text);
 
-  const [user_id, report_id] = await postgres.transaction(
+  const [user_result, report_result] = await postgres.transaction(
     async (tx) => {
 
       const [exists_user] = await tx.select().from(usersTable).where(eq(usersTable.contact, contact))
@@ -155,24 +158,38 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
         })
         .returning();
 
-      return [db_user?.id, report?.id];
+      await mongoConnect()
+
+      const data: ReportType = {
+        category: report!.category,
+        report_id: report!.id,
+        summary: report!.summary ?? "",
+        user_id: report!.id
+        
+      }
+
+      await reportEmbedding.create(data)
+
+      return [db_user, report];
     }
   );
 
-  if (!user_id && !report_id) {
+  if (!user_result?.id && !report_result?.id) {
     throw new MCPToolException("User or Report failed to create! Try Again.", ReportTools.CREATE_NEW_REPORT)
   }
 
+
+
   return new MCPToolResponse(
     "Report has been submitted successfully",
-    { user_id, report_id },
+    { user_id: user_result?.id, report_id: report_result?.id },
     201
   ).toObject();
 
 }
 
 const updateReportTool = async (payload: UpdateReportPayloadType) => {
-const data = payload
+  const data = payload
 
   const updateData = {
     location: data.location,

@@ -17,8 +17,7 @@ export const attachMCP = async (
   const use_agent = req.headers[USE_AGENT_HEADER_KEY] as string
   const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string
   const prompt = payload.prompt || null
-
-  await mcpClient.connect(transport);
+  
   const { tools } = await mcpClient.listTools();
 
   if (use_agent === "true") {
@@ -78,8 +77,6 @@ export const useMCPTool = async (
   const value = req.value
   const tool_name = req.toolName
 
-
-  await mcpClient.connect(transport);
   const { tools } = await mcpClient.listTools()
   tools.map((tool) => {
     console.log("name: ", tool.name)

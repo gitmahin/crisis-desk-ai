@@ -3,13 +3,14 @@ import { postgres } from "@/lib/db.connect";
 import { and, eq, sql, SQL } from "drizzle-orm";
 import { McpRegistrar } from "@/blueprints";
 import { MCPResourceResponse } from "@/lib/resource-response";
-import { asyncResourceHandler } from "@/lib";
+import { asyncResourceHandler, mongoConnect } from "@/lib";
 import { ResourceTemplate, type ReadResourceCallback, type ReadResourceTemplateCallback } from "@modelcontextprotocol/server";
 import { redisClient, reportRedis } from "@/lib/redis";
 import { connectRedis } from "@/lib/redis";
 import { MCPResourceException } from "@/lib/exceptions-handlers";
 import { getPreparedReportStats } from "@/prepared-statements";
 import { SystemCustomErrorCode } from "@repo/shared";
+import { reportEmbedding } from "@/rag";
 
 export class ReportResources extends McpRegistrar {
   registerAllReports() {
@@ -56,11 +57,26 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
+  registerGetSimiliarReports() {
+    this.server.registerResource(
+      "get-similar-reports",
+      new ResourceTemplate('reports://similar/{query}/', { list: undefined }),
+      {
+        title: "Get Similar Incident Reports",
+        description:
+          "Returns incident reports that are similar to a given report based on factors such as category, description, location, and other relevant attributes to help identify related or duplicate incidents.",
+        mimeType: "application/json",
+      },
+      asyncResourceHandler(getSimilarReports)
+    );
+  }
+
 
   init() {
     this.registerAllReports();
     this.registerGetReportById();
     this.registerGetReportAnalytics();
+    this.registerGetSimiliarReports()
   }
 }
 
@@ -210,4 +226,12 @@ const getReportAnalyticsSummary: ReadResourceCallback = async (uri) => {
   }
 
   return new MCPResourceResponse(uri.href, JSON.stringify(data)).toObject()
+}
+
+const getSimilarReports: ReadResourceTemplateCallback = async (uri, variables) => {
+  const query = decodeURIComponent(variables.query as string)
+  console.log("query is here",query)
+  await mongoConnect()
+  const response = await reportEmbedding.getResponseFromVectorSearch(query as string)
+  return new MCPResourceResponse(uri.href, JSON.stringify(response)).toObject()
 }

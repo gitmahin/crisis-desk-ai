@@ -6,7 +6,6 @@ import type { NextFunction, Request, Response } from "express";
 export const useMCPResource = async (req: Request, res: Response, next: NextFunction) => {
     const uri = req.resourceUri
 
-    await mcpClient.connect(transport);
     const { contents } = await mcpClient.readResource({ uri: uri as string });
 
     console.log("here is the content: ", contents)

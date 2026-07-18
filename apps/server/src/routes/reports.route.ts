@@ -19,6 +19,8 @@ router
 router
   .route("/")
   .post(
+    reportResourceMiddleware.injectFindDuplicateResource,
+    useMCPResource,
     reportToolMiddleware.injectCreateReportPayload.bind(reportToolMiddleware), useMCPTool
   );
 

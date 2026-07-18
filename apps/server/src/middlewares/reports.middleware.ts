@@ -16,12 +16,12 @@ type DuplicateResponseDataType = {
 
 interface IReportToolPaylodInjectorMiddleware {
     injectCreateReportPayload(req: Request, res: Response, next: NextFunction): Promise<Response | void>
-
     injectUpdateReportPayload(req: Request, res: Response, next: NextFunction): Promise<Response | void>
     injectDeleteReportPayload(req: Request, res: Response, next: NextFunction): Promise<Response | void>
 }
 
 export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInjectorMiddleware {
+
 
     async injectCreateReportPayload(req: Request, res: Response, next: NextFunction) {
         const payload = req.body;
@@ -39,6 +39,7 @@ export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInje
                 [z4.flattenError(error)]
             );
         }
+
 
         const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string
         const { text: model_response } = await generateText({
@@ -61,6 +62,7 @@ export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInje
 
         const parsed_model_response: DuplicateResponseDataType =
             convertToValidJson(model_response);
+        console.log("here it is", parsed_model_response)
 
         if (parsed_model_response.possibleDuplicate) {
             throw new ApiError(
@@ -135,6 +137,7 @@ export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInje
 }
 
 interface IReportRsrcPayloadInjectorMiddleware {
+    injectFindDuplicateResource(req: Request, res: Response, next: NextFunction): Promise<Response | void>
     injectGetReportByIdPayload(req: Request, res: Response, next: NextFunction): Promise<Response | void>
     injectGetAllReportsPayload(req: Request, res: Response, next: NextFunction): Promise<Response | void>
     injectGetAnalylticsPayload(req: Request, res: Response, next: NextFunction): Promise<Response | void>
@@ -142,6 +145,11 @@ interface IReportRsrcPayloadInjectorMiddleware {
 
 export class ReportRsrcPayloadInjectorMiddleware implements IReportRsrcPayloadInjectorMiddleware {
 
+    async injectFindDuplicateResource(req: Request, res: Response, next: NextFunction) {
+        const payload = req.body
+        req.resourceUri = `reports://similar/${encodeURIComponent(JSON.stringify(payload))}/`
+        return next()
+    }
 
     async injectGetAllReportsPayload(req: Request, res: Response, next: NextFunction) {
         const queryParams = req.query;
