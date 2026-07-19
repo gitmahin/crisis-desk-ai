@@ -6,7 +6,7 @@ import { ApiError, ApiResponse, getSystemCustomErrorMsgByKey, SystemCustomErrorM
 import { generateText, jsonSchema, type ToolSet } from "ai";
 import type { NextFunction, Request, Response } from "express";
 
-export const attachMCP = async (
+export const attachAgent = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -16,8 +16,10 @@ export const attachMCP = async (
   // Get Agent Infos
   const use_agent = req.headers[USE_AGENT_HEADER_KEY] as string
   const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string
-  const prompt = payload.prompt || null
-  
+  const prompt = `Here is the necessary resource: ${JSON.stringify(req.resourceResult)}.
+  Now do the task given in the prompt.
+  ` + payload.prompt || null
+
   const { tools } = await mcpClient.listTools();
 
   if (use_agent === "true") {
@@ -47,6 +49,7 @@ export const attachMCP = async (
       model: groq(model_crn ?? "openai/gpt-oss-20b"),
       prompt: prompt,
       tools: groqTools,
+      
     });
 
     const toolResult = toolResults[0]?.output as CallToolResult | undefined;
@@ -64,7 +67,6 @@ export const attachMCP = async (
     return res.status(status).json(new ApiResponse(status, toolResult?.content[0]?.text, toolResult?.structuredContent));
 
   }
-
   throw new ApiError(400, getSystemCustomErrorMsgByKey("INVALID_AGENT_CALL")!)
 
 }

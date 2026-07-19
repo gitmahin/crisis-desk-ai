@@ -1,4 +1,4 @@
-import { reportModel, type ReportSchemaType, type ReportType } from "@/models/report-model";
+import { reportModel, type ReportType } from "@/models/report-model";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import mongoose from "mongoose";
 import type { Collection } from "mongodb"
@@ -14,7 +14,6 @@ class ReportEmbedding extends BaseRag {
 
     }
     async create(data: ReportType) {
-
         const splitter = RecursiveCharacterTextSplitter.fromLanguage("markdown", { chunkSize: 500, chunkOverlap: 50 })
         const summary = `
         report_id: ${data.report_id}
@@ -22,13 +21,17 @@ class ReportEmbedding extends BaseRag {
         category: ${data.category}
         Incident: ${data.summary}
         `
-        const output = await splitter.createDocuments([summary as string])
-
+        const output = await splitter.createDocuments(
+            [summary],
+            [{
+                report_id: data.report_id
+            }]
+        );
         const nativeCollection = mongoose.connection.getClient()
             .db(mongoose.connection.name)
             .collection(reportModel.collection.name) as unknown as Collection;
 
-        await MongoDBAtlasVectorSearch.fromDocuments(
+        await MongoDBAtlasVectorSearch.fromDocuments( // const returned = 
             output,
             new VoyageEmbeddings({
                 apiKey: baseConfig.VOYAGE_API_KEY,
@@ -38,11 +41,11 @@ class ReportEmbedding extends BaseRag {
                 collection: nativeCollection,
                 indexName: "default",
                 textKey: "summary",
-                embeddingKey: "embedding"
+                embeddingKey: "embedding",
             }
 
         )
-
+        // console.log("returns :", returned)
         await this.createSearchIndex(reportModel, "default")
     }
 
@@ -52,6 +55,7 @@ class ReportEmbedding extends BaseRag {
             .collection(reportModel.collection.name) as unknown as Collection;
 
         const vectorStore = new MongoDBAtlasVectorSearch(
+
             new VoyageEmbeddings({
                 apiKey: baseConfig.VOYAGE_API_KEY,
                 modelName: "voyage-4",

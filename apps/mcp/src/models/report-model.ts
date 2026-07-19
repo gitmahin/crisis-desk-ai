@@ -5,17 +5,25 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface ReportSchemaType extends Document {
     summary: string
     report_id: string
-    user_id: string
-    category: string
     embedding?: {
         type: number[],
         required: true
     }
 }
 
-export type ReportType = Partial<mongoose.InferSchemaType<typeof reportSchema>>
+export type ReportType = Partial<mongoose.InferSchemaType<typeof reportSchema> > & Partial<{
+    user_id: string
+    category: string
+}>
 
 const reportSchema: Schema<ReportSchemaType> = new Schema({
+    // dont make anything here unique true
+    // as database will save chunk of data if data is large
+    // in worst case data saving will fail for unique constraint
+    report_id: {
+        type: String,
+        required: true
+    },
     summary: {
         type: String,
         required: true

@@ -165,7 +165,7 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
         report_id: report!.id,
         summary: report!.summary ?? "",
         user_id: report!.id
-        
+
       }
 
       await reportEmbedding.create(data)
@@ -223,13 +223,26 @@ const updateReportTool = async (payload: UpdateReportPayloadType) => {
 
 const deleteReportTool = async (payload: GetReportByIdPayloadType) => {
   const data = payload
-  const [deletedReport] = await postgres
-    .delete(reportsTable)
-    .where(eq(reportsTable.id, data.id))
-    .returning();
 
+  await mongoConnect()
   await connectRedis()
-  await reportRedis.deleteSingleReportCache(data.id)
+
+  const [[deletedReport]] = await Promise.all(
+    [
+      postgres
+        .delete(reportsTable)
+        .where(eq(reportsTable.id, data.id))
+        .returning(),
+      reportModel.deleteMany({
+        report_id: data.id
+      }),
+      reportRedis.deleteSingleReportCache(data.id)
+    ]
+  )
+
+
+
+
 
   if (!deletedReport) {
     throw new MCPToolException("Cannot delete the report.", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
