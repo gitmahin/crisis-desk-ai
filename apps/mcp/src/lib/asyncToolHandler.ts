@@ -26,7 +26,7 @@ function errorFallback(error: unknown) {
     error instanceof MCPException
       ? error.toErrorResponse()
       : handleMCPError(error);
-  console.log("inside the tool error", error);
+  // console.log("inside the tool error", error);
   return {
     content: [
       { type: "text" as const, text: errorResponse.message ?? "No message" },

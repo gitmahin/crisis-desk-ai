@@ -16,7 +16,7 @@ export function asyncResourceHandler<T extends AnyResourceCallback>(
       // @ts-expect-error - spreading generic args into the original fn
       return await requestHandlerFn(...args);
     } catch (error) {
-      console.log("Error here:", error);
+      // console.log("Error here:", error);
       const errorResponse =
         error instanceof MCPException
           ? error.toErrorResponse()

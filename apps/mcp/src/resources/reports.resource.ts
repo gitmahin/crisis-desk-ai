@@ -89,7 +89,7 @@ const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
     variables.category !== "none" ? variables.category : undefined;
   const urgency = variables.urgency !== "none" ? variables.urgency : undefined;
 
-  console.log(`page: ${page} | cat: ${category} | urgency: ${urgency}`);
+  // console.log(`page: ${page} | cat: ${category} | urgency: ${urgency}`);
 
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -140,10 +140,10 @@ const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
     .limit(limit)
     .offset(offset);
 
-  console.log("reports here", reports);
+  // console.log("reports here", reports);
 
   await connectRedis();
-  console.log("redis response", await redisClient.ping());
+  // console.log("redis response", await redisClient.ping());
   await reportRedis.cacheNReports(reports, page, 30);
 
   if (reports.length > 0) {
@@ -242,7 +242,7 @@ const getSimilarReports: ReadResourceTemplateCallback = async (
   variables
 ) => {
   const query = decodeURIComponent(variables.query as string);
-  console.log("query is here", query);
+  // console.log("query is here", query);
   await mongoConnect();
   const response = await reportEmbedding.getResponseFromVectorSearch(
     query as string

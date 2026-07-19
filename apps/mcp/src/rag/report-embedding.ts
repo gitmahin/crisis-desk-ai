@@ -88,7 +88,7 @@ class ReportEmbedding extends BaseRag {
     });
 
     const output = await retriever._getRelevantDocuments(query);
-    console.log("here is the output mahin: ", output);
+    // console.log("here is the output mahin: ", output);
     return output;
   }
 }

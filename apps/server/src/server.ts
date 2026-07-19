@@ -67,9 +67,9 @@ app.use("/api", routers);
 
 app.get("/health", async (req, res) => {
   // throw new ApiError(500, getSystemCustomErrorMsgByKey("INTERNAL_SERVER_ERROR")!)
-  console.log("ip is", req.clientIp);
+  // console.log("ip is", req.clientIp);
   const result = await redisClient.ping();
-  console.log(result);
+  // console.log(result);
   res.status(200).json(new ApiResponse(200, "OK"));
 });
 

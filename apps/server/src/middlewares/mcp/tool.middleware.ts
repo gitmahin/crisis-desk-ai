@@ -22,7 +22,7 @@ export const attachAgent = async (
   const use_agent = req.headers[USE_AGENT_HEADER_KEY] as string; // value = true
   const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string; // value = model_name
 
-  console.log("here is mahin agent: ", use_agent);
+  // console.log("here is mahin agent: ", use_agent);
   const prompt =
     `Here is the necessary resource: ${JSON.stringify(req.resourceResult)}.
   Now do the task given in the prompt.
@@ -62,7 +62,7 @@ export const attachAgent = async (
     });
 
     const toolResult = toolResults[0]?.output as CallToolResult | undefined;
-    console.error("here is the tool result", toolResults, text);
+    // console.error("here is the tool result", toolResults, text);
 
     if (toolResult?.isError) {
       const error = toolResult._meta?.error;
@@ -102,7 +102,7 @@ export const useMCPTool = async (
 
   const { tools } = await mcpClient.listTools();
   tools.map((tool) => {
-    console.log("name: ", tool.name);
+    // console.log("name: ", tool.name);
   });
   const toolResult = await mcpClient.callTool({
     name: tool_name as string,
@@ -110,7 +110,7 @@ export const useMCPTool = async (
   });
 
   if (toolResult.isError) {
-    console.log("tool error", toolResult);
+    // console.log("tool error", toolResult);
     const error = toolResult._meta?.error as any;
     throw new ApiError(
       Number(error.status) ?? 400,

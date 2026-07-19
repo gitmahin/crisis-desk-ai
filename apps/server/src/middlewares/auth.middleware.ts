@@ -25,7 +25,7 @@ export const AuthMiddlware = async (
       req.cookies?.[CookieService.REFRESH_TOKEN.name];
     const incomingAccessToken = req.cookies?.[CookieService.ACCESS_TOKEN.name];
 
-    console.log("cookies are: ", incomingAccessToken, incomingRefreshToken);
+    // console.log("cookies are: ", incomingAccessToken, incomingRefreshToken);
 
     if (incomingAccessToken) {
       try {
@@ -39,7 +39,7 @@ export const AuthMiddlware = async (
             email: decode_access_token.email,
             role: decode_access_token.role,
           };
-          console.log("Token not refreshed", req.user);
+          // console.log("Token not refreshed", req.user);
           return next();
         }
       } catch {}

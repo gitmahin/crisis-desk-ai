@@ -23,7 +23,7 @@ import { userRedisService } from "@/redis-a/user.redis";
 
 export class UserController {
   async createUser(req: Request, res: Response) {
-    try {
+   
       const payload = req.body;
 
       const { data, success, error } = validateWithZod(
@@ -58,8 +58,8 @@ export class UserController {
 
       if (!newUser) {
         throw new ApiError(
-          500,
-          getSystemCustomErrorMsgByKey("INTERNAL_SERVER_ERROR")!
+          503,
+          getSystemCustomErrorMsgByKey("UNKNOWN_ERROR")!
         );
       }
 
@@ -96,15 +96,15 @@ export class UserController {
       return res
         .status(201)
         .json(new ApiResponse(201, "OK", { id: newUser?.id }));
-    } catch (error) {
-      console.log(error);
-    }
+  
+
+
   }
 
   async loginUser(req: Request, res: Response) {
     const payload = req.query;
 
-    console.log("here is payload", payload);
+    // console.log("here is payload", payload);
 
     const { data, success, error } = validateWithZod(
       payload,
