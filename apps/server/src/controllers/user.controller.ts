@@ -19,7 +19,7 @@ import { eq } from "drizzle-orm";
 import { AuthConfig } from "@/config";
 import z4 from "zod/v4";
 import { connectRedis } from "@/libs/redis";
-import { userRedisService } from "@/redis/user.redis";
+import { userRedisService } from "@/redis-a/user.redis";
 
 export class UserController {
   async createUser(req: Request, res: Response) {

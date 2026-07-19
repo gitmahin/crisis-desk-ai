@@ -1,32 +1,9 @@
 import { RedisConfig } from "@/config";
+import type { RedisClientType } from "redis"
+import { createRedisClient, ReportsRedis } from "@repo/shared";
 
-import { createClient } from "redis";
 
-export const redisClient = createClient({
-  username: `${RedisConfig.REDIS_USERNAME}`,
-  password: `${RedisConfig.REDIS_PASS}`,
-  disableOfflineQueue: true, // disable queuing data when connection is down.
-  socket: {
-    host: `${RedisConfig.REDIS_HOST}`,
-    port: Number(RedisConfig.REDIS_PORT),
-    reconnectStrategy: (retries) => {
-      // Generate a random jitter between 0 – 100 ms:
-      const jitter = Math.floor(Math.random() * 100);
-
-      // Delay is an exponential backoff, (2^retries) * 50 ms, with a
-      // maximum value of 3000 ms:
-      const delay = Math.min(Math.pow(2, retries) * 50, 3000);
-
-      return delay + jitter;
-    },
-    connectTimeout: 10000, // in milliseconds
-
-    // tls: true,
-    // key: fs.readFileSync('./redis_user_private.key'),
-    // cert: fs.readFileSync('./redis_user.crt'),
-    // ca: [fs.readFileSync('./redis_ca.pem')]
-  },
-});
+export const redisClient: RedisClientType = createRedisClient(RedisConfig.REDIS_USERNAME, RedisConfig.REDIS_PASS, RedisConfig.REDIS_HOST, Number(RedisConfig.REDIS_PORT))
 
 redisClient.on("error", (err: unknown) =>
   console.log("Redis Client Error", err)
@@ -43,3 +20,7 @@ export async function connectRedis() {
     await redisClient.connect();
   }
 }
+
+
+// Redis instances
+export const reportRedis = new ReportsRedis(redisClient)

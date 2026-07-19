@@ -10,24 +10,31 @@ enum SYSTEM_CUSTOM_ERROR_EVENTS {
   "INVALID_USER_INPUT" = "INVALID_USER_INPUT",
   "INVALID_CREDENTIALS" = "INVALID_CREDENTIALS",
   "UNAUTHORIZED" = "UNAUTHORIZED",
+  "UNKNOWN_ERROR" = "UNKNOWN_ERROR",
+    "MISSING_PROMPT_FOR_AGENT" = "MISSING_PROMPT_FOR_AGENT",
+     "INVALID_AGENT_CALL" = "INVALID_AGENT_CALL",
+
 }
 
 export const SystemCustomErrorCode: Record<SYSTEM_CUSTOM_ERROR_EVENTS, string> =
-  {
-    INTERNAL_SERVER_ERROR: "50000",
-    CREATE_REPORT_PAYLOAD_ERROR: "40001",
-    UPDATE_REPORT_STS_PAYLOAD_ERROR: "40002",
-    GET_REPORT_BY_ID_PAYLOAD_ERROR: "40003",
-    GET_REPORT_BY_QUERY_PAYLOAD_ERROR: "40004",
-    REPORT_NOT_FOUND: "40401",
-    RESOURCE_NOT_FOUND: "40402",
-    DUPLICATE_REPORT_FOUND: "40901",
-    INVALID_USER_INPUT: "40005",
-    INVALID_CREDENTIALS: "40101",
-    UNAUTHORIZED: "40100",
-  };
+{
+  INTERNAL_SERVER_ERROR: "50000",
+  CREATE_REPORT_PAYLOAD_ERROR: "40001",
+  UPDATE_REPORT_STS_PAYLOAD_ERROR: "40002",
+  GET_REPORT_BY_ID_PAYLOAD_ERROR: "40003",
+  GET_REPORT_BY_QUERY_PAYLOAD_ERROR: "40004",
+  REPORT_NOT_FOUND: "40401",
+  RESOURCE_NOT_FOUND: "40402",
+  DUPLICATE_REPORT_FOUND: "40901",
+  INVALID_USER_INPUT: "40005",
+  INVALID_CREDENTIALS: "40101",
+  UNAUTHORIZED: "40100",
+    MISSING_PROMPT_FOR_AGENT: "40006",
+      INVALID_AGENT_CALL: "40007",
+  UNKNOWN_ERROR: "50001",
+};
 
-type SystemCustomErrorMessageDataType = {
+export type SystemCustomErrorMessageDataType = {
   title?: string;
   message: string;
   code: string;
@@ -61,9 +68,9 @@ export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
     code: SystemCustomErrorCode.CREATE_REPORT_PAYLOAD_ERROR,
   },
   [SystemCustomErrorCode.UPDATE_REPORT_STS_PAYLOAD_ERROR]: {
-    title: "Invalid Status Update",
+    title: "Invalid Report Update",
     message:
-      "We couldn't update the report status. Please ensure the report ID is correct and the selected status is valid.",
+      "We couldn't update the report. Please ensure the report ID is correct and all data is valid.",
     code: SystemCustomErrorCode.UPDATE_REPORT_STS_PAYLOAD_ERROR,
   },
   [SystemCustomErrorCode.GET_REPORT_BY_ID_PAYLOAD_ERROR]: {
@@ -111,6 +118,24 @@ export const SystemCustomErrorMsgByCode: SystemCustomErrorMessageType = {
     title: "Unauthorized",
     message: "Your session has expired or is invalid. Please log in again.",
     code: SystemCustomErrorCode.UNAUTHORIZED,
+  },
+  [SystemCustomErrorCode.UNKNOWN_ERROR]: {
+    title: "Unknown Error",
+    message:
+      "An unexpected error occurred. Please try again later or contact support if the issue persists.",
+    code: SystemCustomErrorCode.UNKNOWN_ERROR,
+  },
+    [SystemCustomErrorCode.INVALID_AGENT_CALL]: {
+    title: "Invalid Agent Call",
+    message:
+      "Agent usage requires the 'X-Use-Agent: true' header to be set. Please include this header and try again.",
+    code: SystemCustomErrorCode.INVALID_AGENT_CALL,
+  },
+   [SystemCustomErrorCode.MISSING_PROMPT_FOR_AGENT]: {
+    title: "Missing Prompt",
+    message:
+      "A prompt is required when using an agent. Please provide a prompt and try again.",
+    code: SystemCustomErrorCode.MISSING_PROMPT_FOR_AGENT,
   },
 };
 

@@ -1,6 +1,6 @@
 import { AuthConfig } from "@/config";
 import { postgres } from "@/libs";
-import { userRedisService } from "@/redis/user.redis";
+import { userRedisService } from "@/redis-a/user.redis";
 import {
   ACCESS_TOKEN_EXPIRY_SEC,
   CookieService,
@@ -14,14 +14,6 @@ import {
 import { and, eq, sql } from "drizzle-orm";
 import type { NextFunction, Response, Request } from "express";
 import jwt from "jsonwebtoken";
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: { id: string; email: string; role: string };
-    }
-  }
-}
 
 export const AuthMiddlware = async (
   req: Request,

@@ -4,10 +4,13 @@ org: serverlessmahin
 app: crisis-desk-ai
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: serverless
+useDotenv: true
 
 provider:
   name: aws
   runtime: nodejs24.x
+  region: ap-south-1
+
   environment:
     # pass environment variables during deploying
     NODE_OPTIONS: --enable-source-maps
@@ -16,13 +19,13 @@ provider:
     GROQ_AI_API_KEY: ${env:GROQ_AI_API_KEY}
     JWT_ACCESS_TOKEN_SECRET: ${env:JWT_ACCESS_TOKEN_SECRET}
     JWT_REFRESH_TOKEN_SECRET: ${env:JWT_REFRESH_TOKEN_SECRET}
+    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY : ${env:AWS_SECRET_ACCESS_KEY}
   apiGateway:
     shouldStartNameWithService: true
   # Uncomment to easily set up a custom domain. Read the docs for more details:
   # https://www.serverless.com/framework/docs/providers/aws/guide/domains
   # domain: api.example.com
-
-   
 
 functions:
   api:
@@ -30,8 +33,12 @@ functions:
     events:
       - httpApi: "*"
 
-
 plugins:
-  # No need to install serverless-plugin-typescript as Serverless now includes ESBuild and supports Typescript out-of-the-box
   - serverless-offline
+
+custom:
+  dotenv:
+    exclude:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY 
 

@@ -1,11 +1,4 @@
-import {
-  oauthMetadataResponse,
-  type ListResourcesCallback,
-  type McpServer,
-  type ReadResourceCallback,
-  type ResourceLink,
-} from "@modelcontextprotocol/server";
-import { reportZSchema } from "@repo/zod";
+import { reportZSchema, type CreateReportPayloadType, type GetReportByIdPayloadType, type UpdateReportPayloadType } from "@repo/zod";
 import { REPORT_PREDICTION_PROMPT } from "@/constant-prompts";
 import {
   reportsTable,
@@ -13,21 +6,31 @@ import {
   type PgReportsSelectType,
 } from "@repo/database";
 import { postgres } from "@/lib/db.connect";
-import z4 from "zod/v4";
 import { generateText } from "ai";
-
 import { eq } from "drizzle-orm";
-import { convertToValidJson } from "@repo/shared";
+import { convertToValidJson, SystemCustomErrorCode } from "@repo/shared";
 import { McpRegistrar } from "@/blueprints";
-import { baseConfig } from "@/config";
 import { groq } from "@/lib/ai-models";
+import { asyncToolHandler, mongoConnect } from "@/lib";
+import { MCPToolResponse } from "@/lib/tool-response";
+import { MCPToolException } from "@/lib/exceptions-handlers";
+import { connectRedis, redisClient, reportRedis } from "@/lib/redis";
+import { CREATE_NEW_REPORT_TOOL_NAME, DELETE_REPORT_TOOL_NAME, UPDATE_REPORT_TOOL_NAME } from "@repo/constants";
+import { reportModel, type ReportSchemaType, type ReportType } from "@/models/report-model";
+import mongoose, { Schema } from "mongoose";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { reportEmbedding } from "@/rag";
+
 
 export class ReportTools extends McpRegistrar {
+  static CREATE_NEW_REPORT = CREATE_NEW_REPORT_TOOL_NAME
+  static UPDATE_REPORT = UPDATE_REPORT_TOOL_NAME
+  static DELETE_REPORT = DELETE_REPORT_TOOL_NAME
   registerCreateReport() {
     this.server.registerTool(
-      "create-new-report",
+      ReportTools.CREATE_NEW_REPORT,
       {
-        title: "Create new report",
+        title: "Create New Incident Report",
         description: "Create new report based on the given value.",
         inputSchema: reportZSchema.createReport,
         annotations: {
@@ -35,20 +38,68 @@ export class ReportTools extends McpRegistrar {
           idempotentHint: false,
           openWorldHint: true,
           readOnlyHint: false,
-        },
-        outputSchema: z4.object({
-          user_id: z4.string().nullable(),
-          report_id: z4.string().nullable(),
-        }),
+        }
       },
-      async (payload) => {
-        const { contact, description, language, location, name } = payload;
+      asyncToolHandler(createReportTool)
+    );
+  }
 
-        // Sampling is deprecated. So we have to call LLM directly
-        const { text } = await generateText({
-          model: groq("openai/gpt-oss-20b"),
+  registerUpdateReport() {
+    this.server.registerTool(
+      ReportTools.UPDATE_REPORT,
+      {
+        title: "Update Incident Report",
+        description:
+          "Updates an existing incident report by its ID. You can modify fields such as the location, description, category, language, urgency, status, summary, suggested action, confidence, or geographic location.",
+        inputSchema: reportZSchema.updateReport,
+        annotations: {
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+          readOnlyHint: false,
+        }
+      },
+      asyncToolHandler(updateReportTool)
+    );
+  }
 
-          prompt: `You are an emergency incident classification AI.
+  registerDeleteReport() {
+    this.server.registerTool(
+      ReportTools.DELETE_REPORT,
+      {
+        title: "Delete Incident Report",
+        description:
+          "Deletes an existing incident report identified by its ID. Use this operation only when the report should be permanently removed.",
+        inputSchema: reportZSchema.getReportById,
+        annotations: {
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+          readOnlyHint: false,
+        }
+      },
+      asyncToolHandler(deleteReportTool)
+    );
+  }
+
+
+  init() {
+    this.registerCreateReport()
+    this.registerUpdateReport()
+    this.registerDeleteReport()
+  }
+}
+
+
+const createReportTool = async (payload: CreateReportPayloadType) => {
+
+  const { contact, description, language, location, name } = payload;
+
+  // Sampling is deprecated. So we have to call LLM directly
+  const { text } = await generateText({
+    model: groq("openai/gpt-oss-20b"),
+
+    prompt: `You are an emergency incident classification AI.
                             Analyze the incident report below and classify it.
 
                             Input:
@@ -59,154 +110,143 @@ export class ReportTools extends McpRegistrar {
                             - Language: ${language}
 
                             ${REPORT_PREDICTION_PROMPT}`,
-        });
+  });
 
-        if (!text) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: "AI classification failed. Please try again!",
-              },
-            ],
-            isError: true,
-          };
-        }
+  if (!text) {
 
-        try {
-          const predicted_data: Pick<
-            PgReportsSelectType,
-            | "confidence"
-            | "category"
-            | "suggested_action"
-            | "urgency"
-            | "summary"
-          > = convertToValidJson(text);
+    throw new MCPToolException("AI classification failed. Please try again!", ReportTools.CREATE_NEW_REPORT)
+  }
 
-          const [user_id, report_id] = await postgres.transaction(
-            async (tx) => {
-              const [user] = await tx
-                .insert(usersTable)
-                .values({
-                  name: name,
-                  contact: contact,
-                })
-                .returning();
 
-              if (!user) {
-                tx.rollback();
-              }
+  const predicted_data: Pick<
+    PgReportsSelectType,
+    | "confidence"
+    | "category"
+    | "suggested_action"
+    | "urgency"
+    | "summary"
+  > = convertToValidJson(text);
 
-              const [report] = await tx
-                .insert(reportsTable)
-                .values({
-                  user: user?.id,
-                  description: description,
-                  location: location,
-                  language: String(language).toUpperCase(),
-                  category: String(predicted_data.category).toUpperCase(),
-                  confidence: predicted_data.confidence,
-                  suggested_action: predicted_data.suggested_action,
-                  urgency: String(predicted_data.urgency).toUpperCase(),
-                  summary: predicted_data.summary,
-                })
-                .returning();
+  const [user_result, report_result] = await postgres.transaction(
+    async (tx) => {
 
-              return [String(user?.id), String(report?.id)];
-            }
-          );
+      const [exists_user] = await tx.select().from(usersTable).where(eq(usersTable.contact, contact))
 
-          return {
-            content: [
-              {
-                type: "text",
-                text: "Report has been submitted successfully",
-              },
-            ],
+      const db_user = exists_user ??
+        (
+          await tx
+            .insert(usersTable)
+            .values({ name, contact })
+            .returning()
+        )[0];
 
-            structuredContent: { user_id, report_id },
-          };
-        } catch (error) {
-          console.error(error);
-          return {
-            content: [
-              {
-                type: "text",
-                text: "Failed to submit report!",
-              },
-            ],
-            isError: true,
-          };
-        }
+
+      const [report] = await tx
+        .insert(reportsTable)
+        .values({
+          // @ts-ignore
+          user: db_user!.id,
+          description: description,
+          location: location,
+          language: String(language).toUpperCase(),
+          category: String(predicted_data.category).toUpperCase(),
+          confidence: predicted_data.confidence,
+          suggested_action: predicted_data.suggested_action,
+          urgency: String(predicted_data.urgency).toUpperCase(),
+          summary: predicted_data.summary,
+
+        })
+        .returning();
+
+      await mongoConnect()
+
+      const data: ReportType = {
+        category: report!.category,
+        report_id: report!.id,
+        summary: report!.summary ?? "",
+        user_id: report!.id,
+        created_at: report!.created_at
       }
-    );
+
+      await reportEmbedding.create(data)
+
+      return [db_user, report];
+    }
+  );
+
+  if (!user_result?.id && !report_result?.id) {
+    throw new MCPToolException("User or Report failed to create! Try Again.", ReportTools.CREATE_NEW_REPORT)
   }
 
-  allReports() {
-    this.server.registerResource(
-      "all-reports",
-      "reports://all",
-      {
-        title: "All reports",
-        description:
-          "Returns all submitted incident reports, including reporter contact, location, category, and description. Useful for reviewing report history or checking for duplicates.",
-        mimeType: "application/json",
-      },
-      async (uri) => {
-        try {
-          const prepareReports = postgres
-            .select({
-              id: reportsTable.id,
-              location: reportsTable.location,
-              geo_location: reportsTable.geo_location,
-              language: reportsTable.language,
-              description: reportsTable.description,
-              category: reportsTable.category,
-              urgency: reportsTable.urgency,
-              summary: reportsTable.summary,
-              suggested_action: reportsTable.suggested_action,
-              confidence: reportsTable.confidence,
-              status: reportsTable.status,
-              created_at: reportsTable.created_at,
-              updated_at: reportsTable.updated_at,
-              user: {
-                id: usersTable.id,
-                name: usersTable.name,
-                contact: usersTable.contact,
-                role: usersTable.role,
-              },
-            })
-            .from(reportsTable)
-            .leftJoin(usersTable, eq(reportsTable.user, usersTable.id))
-            .prepare("get_all_reports");
 
-          const reports = await prepareReports.execute();
 
-          if (reports.length > 0) {
-            return {
-              contents: [
-                {
-                  uri: uri.href,
-                  text: JSON.stringify(reports),
-                  mimeType: "application/json",
-                },
-              ],
-            };
-          }
+  return new MCPToolResponse(
+    "Report has been submitted successfully",
+    { user_id: user_result?.id, report_id: report_result?.id },
+    201
+  ).toObject();
 
-          return {
-            contents: [{ uri: uri.href, text: "There is no reports!" }],
-          };
-        } catch (error) {
-          return {
-            contents: [{ uri: uri.href, text: "Failed to get reports!" }],
-          };
-        }
-      }
-    );
+}
+
+const updateReportTool = async (payload: UpdateReportPayloadType) => {
+  const data = payload
+
+  const updateData = {
+    location: data.location,
+    geo_location: data.geo_location,
+    language: data.language,
+    description: data.description,
+    category: data.category,
+    urgency: data.urgency,
+    summary: data.summary,
+    suggested_action: data.suggested_action,
+    confidence: data.confidence,
+    status: data.status,
+  };
+
+  // Remove undefined values so they aren't included in the UPDATE
+  const updates = Object.fromEntries(
+    Object.entries(updateData).filter(([, value]) => value !== undefined)
+  );
+
+  const [updatedReport] = await postgres
+    .update(reportsTable)
+    .set(updates)
+    .where(eq(reportsTable.id, data.id))
+    .returning();
+  if (!updatedReport) {
+    throw new MCPToolException("Couldn't update the report", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
   }
 
-  init() {
-    this.registerCreateReport();
+  return new MCPToolResponse("Report Updated.", updatedReport.id, 200).toObject();
+}
+
+const deleteReportTool = async (payload: GetReportByIdPayloadType) => {
+  const data = payload
+
+  await mongoConnect()
+  await connectRedis()
+
+  const [[deletedReport]] = await Promise.all(
+    [
+      postgres
+        .delete(reportsTable)
+        .where(eq(reportsTable.id, data.id))
+        .returning(),
+      reportModel.deleteMany({
+        report_id: data.id
+      }),
+      reportRedis.deleteSingleReportCache(data.id)
+    ]
+  )
+
+
+
+
+
+  if (!deletedReport) {
+    throw new MCPToolException("Cannot delete the report.", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
   }
+
+  return new MCPToolResponse("Report deleted successfully.", deletedReport.id, 200).toObject();
 }
