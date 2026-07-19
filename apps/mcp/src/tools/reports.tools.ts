@@ -164,8 +164,8 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
         category: report!.category,
         report_id: report!.id,
         summary: report!.summary ?? "",
-        user_id: report!.id
-
+        user_id: report!.id,
+        created_at: report!.created_at
       }
 
       await reportEmbedding.create(data)

@@ -19,36 +19,36 @@ router
 router
   .route("/")
   .post(
-    reportResourceMiddleware.injectFindDuplicateResource,
-    useMCPResource,
-    reportToolMiddleware.injectCreateReportPayload.bind(reportToolMiddleware), useMCPTool
+    asyncHandler(reportResourceMiddleware.injectFindDuplicateResource),
+    asyncHandler(useMCPResource),
+    asyncHandler(reportToolMiddleware.injectCreateReportPayload.bind(reportToolMiddleware)), asyncHandler(useMCPTool)
   );
 
 router
   .route("/:id")
-  .get(reportResourceMiddleware.injectGetReportByIdPayload.bind(reportResourceMiddleware), useMCPResource, asyncHandler(reportController.getReportById.bind(reportController)));
+  .get(asyncHandler(reportResourceMiddleware.injectGetReportByIdPayload.bind(reportResourceMiddleware)), asyncHandler(useMCPResource), asyncHandler(reportController.getReportById.bind(reportController)));
 
 router
   .route("/:id")
   .patch(
-    AuthMiddlware,
-    reportToolMiddleware.injectUpdateReportPayload.bind(reportToolMiddleware),
-    useMCPTool
+    asyncHandler(AuthMiddlware),
+    asyncHandler(reportToolMiddleware.injectUpdateReportPayload.bind(reportToolMiddleware)),
+    asyncHandler(useMCPTool)
   );
 
 router
   .route("/:id")
   .delete(
-    AuthMiddlware,
-    reportToolMiddleware.injectDeleteReportPayload.bind(reportToolMiddleware),
-    useMCPTool
+   asyncHandler( AuthMiddlware),
+   asyncHandler( reportToolMiddleware.injectDeleteReportPayload.bind(reportToolMiddleware)),
+   asyncHandler( useMCPTool)
   );
 
 router
   .route("/stats/summary")
   .get(
-    reportResourceMiddleware.injectGetAnalylticsPayload,
-    useMCPResource,
+    asyncHandler(reportResourceMiddleware.injectGetAnalylticsPayload.bind(reportResourceMiddleware)),
+    asyncHandler(useMCPResource),
     asyncHandler(
       reportController.getReportsAnalyticsSummary.bind(reportController)
     )

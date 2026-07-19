@@ -20,6 +20,10 @@ class ReportEmbedding extends BaseRag {
         user_id: ${data.user_id}
         category: ${data.category}
         Incident: ${data.summary}
+        report created date: ${new Date(data.created_at!).toLocaleString("en-US", {
+            dateStyle: "medium",
+            timeStyle: "short",
+        })}
         `
         const output = await splitter.createDocuments(
             [summary],

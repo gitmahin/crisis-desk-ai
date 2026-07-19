@@ -1,5 +1,5 @@
-export const MODEL_CRN_HEADER_KEY = "X-Model-crn"
-export const USE_AGENT_HEADER_KEY = "X-Use-Agent"
+export const MODEL_CRN_HEADER_KEY = "x-model-crn"
+export const USE_AGENT_HEADER_KEY = "x-use-agent"
 
 
 // Tools Name

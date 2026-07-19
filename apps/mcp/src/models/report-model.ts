@@ -14,6 +14,7 @@ export interface ReportSchemaType extends Document {
 export type ReportType = Partial<mongoose.InferSchemaType<typeof reportSchema> > & Partial<{
     user_id: string
     category: string
+    created_at: string
 }>
 
 const reportSchema: Schema<ReportSchemaType> = new Schema({

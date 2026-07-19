@@ -14,8 +14,10 @@ export const attachAgent = async (
   const payload = req.body
 
   // Get Agent Infos
-  const use_agent = req.headers[USE_AGENT_HEADER_KEY] as string
-  const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string
+  const use_agent = req.headers[USE_AGENT_HEADER_KEY] as string // value = true
+  const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string // value = model_name
+
+  console.log("here is mahin agent: ", use_agent)
   const prompt = `Here is the necessary resource: ${JSON.stringify(req.resourceResult)}.
   Now do the task given in the prompt.
   ` + payload.prompt || null
@@ -49,7 +51,7 @@ export const attachAgent = async (
       model: groq(model_crn ?? "openai/gpt-oss-20b"),
       prompt: prompt,
       tools: groqTools,
-      
+
     });
 
     const toolResult = toolResults[0]?.output as CallToolResult | undefined;
@@ -62,9 +64,17 @@ export const attachAgent = async (
     }
 
 
-    const status = Number(toolResult?._meta?.status)
     // @ts-ignore
-    return res.status(status).json(new ApiResponse(status, toolResult?.content[0]?.text, toolResult?.structuredContent));
+    const status = Number(toolResult?._meta?.error?.status) || 200
+    // @ts-ignore
+
+    const tool_name = toolResults[0]?.toolName as string
+    // @ts-ignore
+    const message = toolResults.length < 1 ? text : toolResult?.content[0].text
+    return res.status(status).json(new ApiResponse(status, message, {
+      toolName: tool_name,
+      content: toolResult?.structuredContent
+    }));
 
   }
   throw new ApiError(400, getSystemCustomErrorMsgByKey("INVALID_AGENT_CALL")!)
