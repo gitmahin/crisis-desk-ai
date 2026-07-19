@@ -1,21 +1,35 @@
-
 import { MCPException } from "@/blueprints";
 import { MCPErrorResponse } from "@/helpers";
 import { CustomDrizzleErrorMessage } from "@repo/shared";
 
 export class MCPToolException extends MCPException {
-  constructor(message: string, toolName: string, errorCode?: string, status?: number) {
+  constructor(
+    message: string,
+    toolName: string,
+    errorCode?: string,
+    status?: number
+  ) {
     super(message, errorCode ?? "TOOL_ERROR", status);
     this.addContext("toolName", toolName);
   }
 
   toErrorResponse(): MCPErrorResponse {
-    return new MCPErrorResponse(this.errorCode, this.message, this.context, this.status);
+    return new MCPErrorResponse(
+      this.errorCode,
+      this.message,
+      this.context,
+      this.status
+    );
   }
 }
 
 export class MCPResourceException extends MCPException {
-  constructor(message: string, resourceUri: string, errorCode?: string, status?: number) {
+  constructor(
+    message: string,
+    resourceUri: string,
+    errorCode?: string,
+    status?: number
+  ) {
     super(message, errorCode ?? "RESOURCE_ERROR", status);
     this.addContext("resourceUri", resourceUri);
   }
@@ -29,7 +43,6 @@ export class MCPResourceException extends MCPException {
     );
   }
 }
-
 
 // for handling unintentional error
 export function handleMCPError(err: unknown): MCPErrorResponse {
@@ -47,9 +60,13 @@ export function handleMCPError(err: unknown): MCPErrorResponse {
 
   if (CustomDrizzleErrorMessage[code]) {
     const drizzleError = CustomDrizzleErrorMessage[code];
-    return new MCPErrorResponse(drizzleError.code ?? code, drizzleError.message, {
-      source: "database",
-    });
+    return new MCPErrorResponse(
+      drizzleError.code ?? code,
+      drizzleError.message,
+      {
+        source: "database",
+      }
+    );
   }
 
   const message =

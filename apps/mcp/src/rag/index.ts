@@ -1,1 +1,1 @@
-export * from "./report-embedding"
+export * from "./report-embedding";

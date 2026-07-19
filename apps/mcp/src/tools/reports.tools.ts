@@ -1,4 +1,9 @@
-import { reportZSchema, type CreateReportPayloadType, type GetReportByIdPayloadType, type UpdateReportPayloadType } from "@repo/zod";
+import {
+  reportZSchema,
+  type CreateReportPayloadType,
+  type GetReportByIdPayloadType,
+  type UpdateReportPayloadType,
+} from "@repo/zod";
 import { REPORT_PREDICTION_PROMPT } from "@/constant-prompts";
 import {
   reportsTable,
@@ -15,17 +20,24 @@ import { asyncToolHandler, mongoConnect } from "@/lib";
 import { MCPToolResponse } from "@/lib/tool-response";
 import { MCPToolException } from "@/lib/exceptions-handlers";
 import { connectRedis, redisClient, reportRedis } from "@/lib/redis";
-import { CREATE_NEW_REPORT_TOOL_NAME, DELETE_REPORT_TOOL_NAME, UPDATE_REPORT_TOOL_NAME } from "@repo/constants";
-import { reportModel, type ReportSchemaType, type ReportType } from "@/models/report-model";
+import {
+  CREATE_NEW_REPORT_TOOL_NAME,
+  DELETE_REPORT_TOOL_NAME,
+  UPDATE_REPORT_TOOL_NAME,
+} from "@repo/constants";
+import {
+  reportModel,
+  type ReportSchemaType,
+  type ReportType,
+} from "@/models/report-model";
 import mongoose, { Schema } from "mongoose";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { reportEmbedding } from "@/rag";
 
-
 export class ReportTools extends McpRegistrar {
-  static CREATE_NEW_REPORT = CREATE_NEW_REPORT_TOOL_NAME
-  static UPDATE_REPORT = UPDATE_REPORT_TOOL_NAME
-  static DELETE_REPORT = DELETE_REPORT_TOOL_NAME
+  static CREATE_NEW_REPORT = CREATE_NEW_REPORT_TOOL_NAME;
+  static UPDATE_REPORT = UPDATE_REPORT_TOOL_NAME;
+  static DELETE_REPORT = DELETE_REPORT_TOOL_NAME;
   registerCreateReport() {
     this.server.registerTool(
       ReportTools.CREATE_NEW_REPORT,
@@ -38,7 +50,7 @@ export class ReportTools extends McpRegistrar {
           idempotentHint: false,
           openWorldHint: true,
           readOnlyHint: false,
-        }
+        },
       },
       asyncToolHandler(createReportTool)
     );
@@ -57,7 +69,7 @@ export class ReportTools extends McpRegistrar {
           idempotentHint: false,
           openWorldHint: false,
           readOnlyHint: false,
-        }
+        },
       },
       asyncToolHandler(updateReportTool)
     );
@@ -76,23 +88,20 @@ export class ReportTools extends McpRegistrar {
           idempotentHint: false,
           openWorldHint: false,
           readOnlyHint: false,
-        }
+        },
       },
       asyncToolHandler(deleteReportTool)
     );
   }
 
-
   init() {
-    this.registerCreateReport()
-    this.registerUpdateReport()
-    this.registerDeleteReport()
+    this.registerCreateReport();
+    this.registerUpdateReport();
+    this.registerDeleteReport();
   }
 }
 
-
 const createReportTool = async (payload: CreateReportPayloadType) => {
-
   const { contact, description, language, location, name } = payload;
 
   // Sampling is deprecated. So we have to call LLM directly
@@ -113,33 +122,27 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
   });
 
   if (!text) {
-
-    throw new MCPToolException("AI classification failed. Please try again!", ReportTools.CREATE_NEW_REPORT)
+    throw new MCPToolException(
+      "AI classification failed. Please try again!",
+      ReportTools.CREATE_NEW_REPORT
+    );
   }
-
 
   const predicted_data: Pick<
     PgReportsSelectType,
-    | "confidence"
-    | "category"
-    | "suggested_action"
-    | "urgency"
-    | "summary"
+    "confidence" | "category" | "suggested_action" | "urgency" | "summary"
   > = convertToValidJson(text);
 
   const [user_result, report_result] = await postgres.transaction(
     async (tx) => {
+      const [exists_user] = await tx
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.contact, contact));
 
-      const [exists_user] = await tx.select().from(usersTable).where(eq(usersTable.contact, contact))
-
-      const db_user = exists_user ??
-        (
-          await tx
-            .insert(usersTable)
-            .values({ name, contact })
-            .returning()
-        )[0];
-
+      const db_user =
+        exists_user ??
+        (await tx.insert(usersTable).values({ name, contact }).returning())[0];
 
       const [report] = await tx
         .insert(reportsTable)
@@ -154,42 +157,41 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
           suggested_action: predicted_data.suggested_action,
           urgency: String(predicted_data.urgency).toUpperCase(),
           summary: predicted_data.summary,
-
         })
         .returning();
 
-      await mongoConnect()
+      await mongoConnect();
 
       const data: ReportType = {
         category: report!.category,
         report_id: report!.id,
         summary: report!.summary ?? "",
         user_id: report!.id,
-        created_at: report!.created_at
-      }
+        created_at: report!.created_at,
+      };
 
-      await reportEmbedding.create(data)
+      await reportEmbedding.create(data);
 
       return [db_user, report];
     }
   );
 
   if (!user_result?.id && !report_result?.id) {
-    throw new MCPToolException("User or Report failed to create! Try Again.", ReportTools.CREATE_NEW_REPORT)
+    throw new MCPToolException(
+      "User or Report failed to create! Try Again.",
+      ReportTools.CREATE_NEW_REPORT
+    );
   }
-
-
 
   return new MCPToolResponse(
     "Report has been submitted successfully",
     { user_id: user_result?.id, report_id: report_result?.id },
     201
   ).toObject();
-
-}
+};
 
 const updateReportTool = async (payload: UpdateReportPayloadType) => {
-  const data = payload
+  const data = payload;
 
   const updateData = {
     location: data.location,
@@ -215,38 +217,48 @@ const updateReportTool = async (payload: UpdateReportPayloadType) => {
     .where(eq(reportsTable.id, data.id))
     .returning();
   if (!updatedReport) {
-    throw new MCPToolException("Couldn't update the report", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
+    throw new MCPToolException(
+      "Couldn't update the report",
+      ReportTools.DELETE_REPORT,
+      SystemCustomErrorCode.REPORT_NOT_FOUND
+    );
   }
 
-  return new MCPToolResponse("Report Updated.", updatedReport.id, 200).toObject();
-}
+  return new MCPToolResponse(
+    "Report Updated.",
+    updatedReport.id,
+    200
+  ).toObject();
+};
 
 const deleteReportTool = async (payload: GetReportByIdPayloadType) => {
-  const data = payload
+  const data = payload;
 
-  await mongoConnect()
-  await connectRedis()
+  await mongoConnect();
+  await connectRedis();
 
-  const [[deletedReport]] = await Promise.all(
-    [
-      postgres
-        .delete(reportsTable)
-        .where(eq(reportsTable.id, data.id))
-        .returning(),
-      reportModel.deleteMany({
-        report_id: data.id
-      }),
-      reportRedis.deleteSingleReportCache(data.id)
-    ]
-  )
-
-
-
-
+  const [[deletedReport]] = await Promise.all([
+    postgres
+      .delete(reportsTable)
+      .where(eq(reportsTable.id, data.id))
+      .returning(),
+    reportModel.deleteMany({
+      report_id: data.id,
+    }),
+    reportRedis.deleteSingleReportCache(data.id),
+  ]);
 
   if (!deletedReport) {
-    throw new MCPToolException("Cannot delete the report.", ReportTools.DELETE_REPORT, SystemCustomErrorCode.REPORT_NOT_FOUND)
+    throw new MCPToolException(
+      "Cannot delete the report.",
+      ReportTools.DELETE_REPORT,
+      SystemCustomErrorCode.REPORT_NOT_FOUND
+    );
   }
 
-  return new MCPToolResponse("Report deleted successfully.", deletedReport.id, 200).toObject();
-}
+  return new MCPToolResponse(
+    "Report deleted successfully.",
+    deletedReport.id,
+    200
+  ).toObject();
+};

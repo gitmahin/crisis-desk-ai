@@ -1,1 +1,1 @@
-export * from "./mcp-error-response"
+export * from "./mcp-error-response";

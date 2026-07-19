@@ -7,13 +7,10 @@
     "allowJs": true,
     "strictNullChecks": true,
     "sourceMap": true,
-    
+
     "paths": {
       "@/*": ["./src/*"]
-      
     }
-
-    
   },
- "include": ["src/**/*", "src/types"]
+  "include": ["src/**/*", "src/types"]
 }

@@ -12,7 +12,6 @@ export class ReportController {
     // Don't return an error here. During filtering,
     // having no matching products is a valid result, not an error.
     return res.status(200).json(new ApiResponse(200, "OK", req.resourceResult));
-
   }
 
   async getReportById(req: Request, res: Response) {
@@ -20,7 +19,6 @@ export class ReportController {
   }
 
   async deleteReportById(req: Request, res: Response) {
-
     return res
       .status(200)
       .json(
@@ -29,7 +27,10 @@ export class ReportController {
   }
 
   async getReportsAnalyticsSummary(req: Request, res: Response) {
-    await reportRedis.cacheReportAnalytics(req.clientIp as string, req.resourceResult)
+    await reportRedis.cacheReportAnalytics(
+      req.clientIp as string,
+      req.resourceResult
+    );
     return res.status(200).json(new ApiResponse(200, "OK", req.resourceResult));
   }
 }

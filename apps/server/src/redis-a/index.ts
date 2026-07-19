@@ -1,2 +1,2 @@
-export * from "./reports.redis"
-export * from "./user.redis"
+export * from "./reports.redis";
+export * from "./user.redis";

@@ -3,15 +3,19 @@ export class MCPErrorResponse {
   readonly message: string;
   readonly details: Record<string, unknown>;
   readonly timestamp: number;
-  readonly status: number
+  readonly status: number;
 
-  constructor(code: string, message: string, details?: Record<string, unknown>, status?: number) {
+  constructor(
+    code: string,
+    message: string,
+    details?: Record<string, unknown>,
+    status?: number
+  ) {
     this.code = code;
     this.message = message;
     this.details = details ?? {};
     this.timestamp = Date.now();
-    this.status = status ?? 400
-
+    this.status = status ?? 400;
   }
 
   toObject(): Record<string, unknown> {
@@ -20,7 +24,7 @@ export class MCPErrorResponse {
       message: this.message,
       details: this.details,
       timestamp: this.timestamp,
-      status: this.status
+      status: this.status,
     };
   }
 

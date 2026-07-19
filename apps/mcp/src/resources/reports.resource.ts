@@ -4,7 +4,11 @@ import { and, eq, sql, SQL } from "drizzle-orm";
 import { McpRegistrar } from "@/blueprints";
 import { MCPResourceResponse } from "@/lib/resource-response";
 import { asyncResourceHandler, mongoConnect } from "@/lib";
-import { ResourceTemplate, type ReadResourceCallback, type ReadResourceTemplateCallback } from "@modelcontextprotocol/server";
+import {
+  ResourceTemplate,
+  type ReadResourceCallback,
+  type ReadResourceTemplateCallback,
+} from "@modelcontextprotocol/server";
 import { redisClient, reportRedis } from "@/lib/redis";
 import { connectRedis } from "@/lib/redis";
 import { MCPResourceException } from "@/lib/exceptions-handlers";
@@ -16,14 +20,14 @@ export class ReportResources extends McpRegistrar {
   registerAllReports() {
     this.server.registerResource(
       "all-reports",
-      new ResourceTemplate('reports://all/{page}/{category}/{urgency}', { list: undefined }),
+      new ResourceTemplate("reports://all/{page}/{category}/{urgency}", {
+        list: undefined,
+      }),
       {
-
         title: "All reports",
         description:
           "Returns all submitted incident reports, including reporter contact, location, category, and description. Useful for reviewing report history or checking for duplicates.",
         mimeType: "application/json",
-
       },
       asyncResourceHandler(allReports)
     );
@@ -32,7 +36,7 @@ export class ReportResources extends McpRegistrar {
   registerGetReportById() {
     this.server.registerResource(
       "get-report-by-id",
-      new ResourceTemplate('reports://all/id/{id}', { list: undefined }),
+      new ResourceTemplate("reports://all/id/{id}", { list: undefined }),
       {
         title: "Get Incident Report by ID",
         description:
@@ -46,7 +50,7 @@ export class ReportResources extends McpRegistrar {
   registerGetReportAnalytics() {
     this.server.registerResource(
       "get-report-analytics",
-      'reports://analytics',
+      "reports://analytics",
       {
         title: "Get Incident Report Analytics",
         description:
@@ -60,7 +64,7 @@ export class ReportResources extends McpRegistrar {
   registerGetSimiliarReports() {
     this.server.registerResource(
       "get-similar-reports",
-      new ResourceTemplate('reports://similar/{query}/', { list: undefined }),
+      new ResourceTemplate("reports://similar/{query}/", { list: undefined }),
       {
         title: "Get Similar Incident Reports",
         description:
@@ -71,31 +75,31 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
-
   init() {
     this.registerAllReports();
     this.registerGetReportById();
     this.registerGetReportAnalytics();
-    this.registerGetSimiliarReports()
+    this.registerGetSimiliarReports();
   }
 }
 
 const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
   const page = Number(variables.page) || 1;
-  const category = variables.category !== 'none' ? variables.category : undefined;
-  const urgency = variables.urgency !== 'none' ? variables.urgency : undefined;
+  const category =
+    variables.category !== "none" ? variables.category : undefined;
+  const urgency = variables.urgency !== "none" ? variables.urgency : undefined;
 
-  console.log(`page: ${page} | cat: ${category} | urgency: ${urgency}`)
+  console.log(`page: ${page} | cat: ${category} | urgency: ${urgency}`);
 
   const limit = 20;
   const offset = (page - 1) * limit;
 
-  await connectRedis()
-  const cache_reports = await reportRedis.getNReports(page)
+  await connectRedis();
+  const cache_reports = await reportRedis.getNReports(page);
   const cache_result = cache_reports.filter((r): r is string => r !== null);
   if (cache_result.length > 0) {
-    const parsed = cache_reports.map((r) => JSON.parse(r as string))
-    return new MCPResourceResponse(uri.href, JSON.stringify(parsed)).toObject()
+    const parsed = cache_reports.map((r) => JSON.parse(r as string));
+    return new MCPResourceResponse(uri.href, JSON.stringify(parsed)).toObject();
   }
 
   const filters: SQL[] = [];
@@ -106,10 +110,7 @@ const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
       eq(reportsTable.category, String(category).toUpperCase())
     );
   if (urgency)
-    filters.push(
-      eq(reportsTable.urgency, String(urgency).toUpperCase())
-    );
-
+    filters.push(eq(reportsTable.urgency, String(urgency).toUpperCase()));
 
   const reports = await postgres
     .select({
@@ -137,26 +138,29 @@ const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
     .leftJoin(usersTable, eq(reportsTable.user, usersTable.id))
     .where(filters.length > 0 ? and(...filters) : undefined)
     .limit(limit)
-    .offset(offset)
+    .offset(offset);
 
+  console.log("reports here", reports);
 
-  console.log("reports here", reports)
-
-  await connectRedis()
-  console.log("redis response", await redisClient.ping())
-  await reportRedis.cacheNReports(reports, page, 30)
+  await connectRedis();
+  console.log("redis response", await redisClient.ping());
+  await reportRedis.cacheNReports(reports, page, 30);
 
   if (reports.length > 0) {
-    return new MCPResourceResponse(uri.href, JSON.stringify(reports)).toObject()
-
+    return new MCPResourceResponse(
+      uri.href,
+      JSON.stringify(reports)
+    ).toObject();
   }
 
-  return new MCPResourceResponse(uri.href, JSON.stringify({})).toObject()
-}
+  return new MCPResourceResponse(uri.href, JSON.stringify({})).toObject();
+};
 
-const getReportBySpecificId: ReadResourceTemplateCallback = async (uri, variables) => {
-
-  const id = variables.id ?? ""
+const getReportBySpecificId: ReadResourceTemplateCallback = async (
+  uri,
+  variables
+) => {
+  const id = variables.id ?? "";
 
   const prepareGetReportById = postgres
     .select({
@@ -188,17 +192,22 @@ const getReportBySpecificId: ReadResourceTemplateCallback = async (uri, variable
   const [result] = await prepareGetReportById.execute({ id: id });
 
   if (!result) {
-    throw new MCPResourceException("Report not found with the specific id.", uri.href, SystemCustomErrorCode.REPORT_NOT_FOUND, 404)
+    throw new MCPResourceException(
+      "Report not found with the specific id.",
+      uri.href,
+      SystemCustomErrorCode.REPORT_NOT_FOUND,
+      404
+    );
   }
 
-  return new MCPResourceResponse(uri.href, JSON.stringify(result)).toObject()
-}
+  return new MCPResourceResponse(uri.href, JSON.stringify(result)).toObject();
+};
 
 const getReportAnalyticsSummary: ReadResourceCallback = async (uri) => {
-  const preparedReport = await getPreparedReportStats()
-  const [result] = await preparedReport.execute()
+  const preparedReport = await getPreparedReportStats();
+  const [result] = await preparedReport.execute();
   if (!result) {
-    throw new MCPResourceException("No stats.", uri.href, "", 404)
+    throw new MCPResourceException("No stats.", uri.href, "", 404);
   }
 
   const data = {
@@ -223,15 +232,20 @@ const getReportAnalyticsSummary: ReadResourceCallback = async (uri) => {
       high: result.high,
       critical: result.critical,
     },
-  }
+  };
 
-  return new MCPResourceResponse(uri.href, JSON.stringify(data)).toObject()
-}
+  return new MCPResourceResponse(uri.href, JSON.stringify(data)).toObject();
+};
 
-const getSimilarReports: ReadResourceTemplateCallback = async (uri, variables) => {
-  const query = decodeURIComponent(variables.query as string)
-  console.log("query is here",query)
-  await mongoConnect()
-  const response = await reportEmbedding.getResponseFromVectorSearch(query as string)
-  return new MCPResourceResponse(uri.href, JSON.stringify(response)).toObject()
-}
+const getSimilarReports: ReadResourceTemplateCallback = async (
+  uri,
+  variables
+) => {
+  const query = decodeURIComponent(variables.query as string);
+  console.log("query is here", query);
+  await mongoConnect();
+  const response = await reportEmbedding.getResponseFromVectorSearch(
+    query as string
+  );
+  return new MCPResourceResponse(uri.href, JSON.stringify(response)).toObject();
+};

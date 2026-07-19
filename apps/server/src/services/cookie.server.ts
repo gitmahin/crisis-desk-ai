@@ -1,6 +1,6 @@
 export const ACCESS_TOKEN_EXPIRY_MIN = 5;
 export const REFRESH_TOKEN_EXPIRY_DAY = 30;
-export const BRW_UUID_TOKEN_EXPIRY_MIN = 5
+export const BRW_UUID_TOKEN_EXPIRY_MIN = 5;
 
 export const ACCESS_TOKEN_EXPIRY_SEC = ACCESS_TOKEN_EXPIRY_MIN * 60; // 5 min
 export const REFRESH_TOKEN_EXPIRY_SEC = REFRESH_TOKEN_EXPIRY_DAY * 24 * 60 * 60; // 30 days
@@ -9,7 +9,7 @@ export const REFRESH_TOKEN_EXPIRY_SEC = REFRESH_TOKEN_EXPIRY_DAY * 24 * 60 * 60;
 // its for concurrently request on api for some data to avoid database overhead .
 // while redis internally save the specified data 10 sec
 // it will increase it to 5 min for cooldown. Send warning message instead of OK
-export const BRW_UUID_TOKEN_EXPIRY_SEC = BRW_UUID_TOKEN_EXPIRY_MIN * 60 // 5 min
+export const BRW_UUID_TOKEN_EXPIRY_SEC = BRW_UUID_TOKEN_EXPIRY_MIN * 60; // 5 min
 
 /**
  * Represents a cookie configuration including its name and options.

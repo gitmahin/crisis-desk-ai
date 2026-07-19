@@ -1,4 +1,7 @@
-import type { ReadResourceCallback, ReadResourceTemplateCallback } from "@modelcontextprotocol/server";
+import type {
+  ReadResourceCallback,
+  ReadResourceTemplateCallback,
+} from "@modelcontextprotocol/server";
 
 import { MCPException } from "@/blueprints";
 import { handleMCPError } from "./exceptions-handlers";

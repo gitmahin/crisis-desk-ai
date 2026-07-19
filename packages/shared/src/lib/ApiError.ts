@@ -1,5 +1,8 @@
 import { type ApiErrorType } from "@repo/types";
-import { SystemCustomErrorMsgByCode, type SystemCustomErrorMessageDataType } from "@/events";
+import {
+  SystemCustomErrorMsgByCode,
+  type SystemCustomErrorMessageDataType,
+} from "@/events";
 
 export class ApiError extends Error implements ApiErrorType {
   public success?: boolean;
@@ -7,7 +10,9 @@ export class ApiError extends Error implements ApiErrorType {
   public errors: unknown[];
   constructor(
     status: number,
-    public error: (typeof SystemCustomErrorMsgByCode)[keyof typeof SystemCustomErrorMsgByCode] | SystemCustomErrorMessageDataType,
+    public error:
+      | (typeof SystemCustomErrorMsgByCode)[keyof typeof SystemCustomErrorMsgByCode]
+      | SystemCustomErrorMessageDataType,
     override stack?: string,
     errors?: unknown[]
   ) {

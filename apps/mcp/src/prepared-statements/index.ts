@@ -1,1 +1,1 @@
-export * from "./get-report-stats"
+export * from "./get-report-stats";

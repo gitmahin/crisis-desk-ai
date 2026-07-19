@@ -7,7 +7,6 @@ import {
 } from "@repo/constants";
 
 class ReportZSchema {
-
   static id = z4
     .uuid({ error: "Invalid Id!" })
     .nonempty({ error: "Id is required!" });
@@ -33,7 +32,10 @@ class ReportZSchema {
     language: z4
       .enum(SUPPORTED_LANGUAGES)
       .nonoptional({ error: "Language is required!" }),
-    model_crn: z4.string({ error: "Invalid model crn!" }).max(255, { error: "Model crn is too long!" }).optional()
+    model_crn: z4
+      .string({ error: "Invalid model crn!" })
+      .max(255, { error: "Model crn is too long!" })
+      .optional(),
   });
 
   getReportById = z4.object({
@@ -43,7 +45,7 @@ class ReportZSchema {
   getReportByQueryParams = z4.object({
     category: z4.enum(REPORT_CATEGORY).optional(),
     urgency: z4.enum(REPORT_URGENCY).optional(),
-    page: z4.string().optional()
+    page: z4.string().optional(),
   });
 
   updateReport = z4.object({

@@ -10,7 +10,7 @@ export class MCPToolResponse<T = Record<string, unknown>> {
     this.structuredContent = structuredContent;
     this.isError = false;
     this.resultType = "success";
-    this.status = status
+    this.status = status;
   }
 
   toObject() {
@@ -20,8 +20,8 @@ export class MCPToolResponse<T = Record<string, unknown>> {
       isError: this.isError,
       resultType: this.resultType,
       _meta: {
-        status: this.status
-      }
+        status: this.status,
+      },
     };
   }
 }

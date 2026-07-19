@@ -1,1 +1,1 @@
-export * from "./reports.redis"
+export * from "./reports.redis";
