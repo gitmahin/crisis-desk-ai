@@ -23,6 +23,9 @@ env:
     AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
     AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
 
+    DOCKER_ACCESS_TOKEN: ${{secrets.DOCKER_ACCESS_TOKEN}}
+    DOCKER_USERNAME: ${{vars.DOCKER_USERNAME}}
+
     MCP_IMAGE_PORT: 5000
     MCP_IMAGE_HOST: 0.0.0.0
     MCP_BASE_URL: ${{vars.MCP_BASE_URL}}
@@ -69,8 +72,9 @@ jobs:
             - name: Login to Docker Hub
               uses: docker/login-action@v4
               with:
-                  username: ${{ vars.DOCKERHUB_USERNAME }}
-                  password: ${{ secrets.DOCKERHUB_TOKEN }}
+                username: ${{ env.DOCKER_USERNAME }}
+                password: ${{ env.DOCKER_ACCESS_TOKEN }}
+
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v4
             - name: Set up Docker Buildx
@@ -86,7 +90,7 @@ jobs:
                       GROQ_AI_API_KEY=${{env.GROQ_AI_API_KEY}}
                       MCP_IMAGE_HOST=${{env.MCP_IMAGE_HOST}}
                       MCP_IMAGE_PORT=${{env.MCP_IMAGE_PORT}}
-                  tags: dockermahin/${{ env.MCP_APP_NAME }}:${{env.IMAGE_TAG}}
+                  tags: ${{env.DOCKER_USERNAME}}/${{ env.MCP_APP_NAME }}:${{env.IMAGE_TAG}}
 
     package-deploy-serverless:
         name: Package serverless project and deploy to AWS Lambda
@@ -100,7 +104,7 @@ jobs:
             - name: Swap Serverless Config File
               id: swap-serverless-config-file
               run: |
-                cp serverless.prod.yml serverless.
+                cp apps/server/serverless.prod.yml apps/server/serverless.yml
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
               with:
