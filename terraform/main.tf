@@ -20,6 +20,8 @@ module "aws_crsisai_ssm" {
   redis_username = var.redis_username
   redis_password = var.redis_password
   redis_port = var.redis_port
+  voyage_ai_api_key = var.voyage_ai_api_key
+  mongo_url = var.mongo_url
 }
 
 # Demonstration of private image repository

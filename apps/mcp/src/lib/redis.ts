@@ -6,7 +6,7 @@ export const redisClient: RedisClientType = createRedisClient(
   RedisConfig.REDIS_USERNAME,
   RedisConfig.REDIS_PASS,
   RedisConfig.REDIS_HOST,
-  Number(RedisConfig.REDIS_PORT)
+  RedisConfig.REDIS_PORT
 );
 
 redisClient.on("error", (err: unknown) =>

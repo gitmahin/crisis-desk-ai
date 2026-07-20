@@ -30,6 +30,14 @@ variable "jwt_refresh_secret_key" {
   type = string
 }
 
+variable "voyage_ai_api_key" {
+  type = string
+}
+
+variable "mongo_url" {
+  type = string
+}
+
 variable "tags" {
   type = map(string)
 }

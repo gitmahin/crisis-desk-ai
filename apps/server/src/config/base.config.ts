@@ -1,4 +1,5 @@
-import { getSmmValue } from "@/libs/dynamic.config";
+
+import { getSmmValue } from "@repo/shared";
 import "dotenv/config";
 
 

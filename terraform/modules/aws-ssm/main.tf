@@ -53,3 +53,18 @@ resource "aws_ssm_parameter" "jwt_refresh_secret_key" {
   value = var.jwt_refresh_secret_key
   tags  = var.tags
 }
+
+resource "aws_ssm_parameter" "voyage_ai_api_key" {
+  name  = "/crsai/prod/voyage_ai_api_key"
+  type  = "SecureString"
+  value = var.voyage_ai_api_key
+  tags  = var.tags
+}
+
+
+resource "aws_ssm_parameter" "mongo_url" {
+  name  = "/crsai/prod/mongo_url"
+  type  = "SecureString"
+  value = var.mongo_url
+  tags  = var.tags
+}

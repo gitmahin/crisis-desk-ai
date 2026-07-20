@@ -1,12 +1,13 @@
-import { RedisConfig } from "@/config";
+
 import type { RedisClientType } from "redis";
 import { createRedisClient, ReportsRedis } from "@repo/shared";
+import { RedisConfig } from "@/config";
 
 export const redisClient: RedisClientType = createRedisClient(
   RedisConfig.REDIS_USERNAME,
   RedisConfig.REDIS_PASS,
   RedisConfig.REDIS_HOST,
-  Number(RedisConfig.REDIS_PORT)
+  RedisConfig.REDIS_PORT
 );
 
 redisClient.on("error", (err: unknown) =>
