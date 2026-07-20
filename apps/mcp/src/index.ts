@@ -1,4 +1,4 @@
-import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
+import { createMcpHandler, hostHeaderValidationResponse, McpServer, originValidationResponse } from "@modelcontextprotocol/server";
 import {
   localhostHostValidation,
   localhostOriginValidation,
@@ -26,19 +26,19 @@ const handler = createMcpHandler(() => {
   return server;
 });
 
+const rawAlbHost = process.env.ALLOWED_AWS_ALB_HOST ?? "";
+const cleanAlbHost = rawAlbHost.replace(/^https?:\/\//, "").split(":")[0];
+
 const allowedHosts = [
   "localhost",
   "127.0.0.1",
   "0.0.0.0",
-  process.env.ALLOWED_AWS_ALB_HOST ?? "",
-];
-
+  cleanAlbHost,
+].filter((host): host is string => Boolean(host && host.trim().length > 0));
 
 const nodeHandler = toNodeHandler(handler);
-const validateHost = hostHeaderValidation(allowedHosts);
-const validateOrigin = originValidation(allowedHosts);
 
-createServer((req, res) => {
+createServer( async (req, res) => {
 
   if (req.url === "/health" && req.method === "GET") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -46,8 +46,25 @@ createServer((req, res) => {
     return;
   }
 
+  const protocol = req.headers["x-forwarded-proto"] || "http";
+  const fullUrl = `${protocol}://${req.headers.host || "localhost"}${req.url}`;
+  
+  const webRequest = new Request(fullUrl, {
+    method: req.method,
+    headers: req.headers as Record<string, string>,
+  });
 
-  if (!validateHost(req, res) || !validateOrigin(req, res)) return;
+  const rejected =
+    hostHeaderValidationResponse(webRequest, allowedHosts) ??
+    originValidationResponse(webRequest, allowedHosts);
+
+  if (rejected) {
+    res.writeHead(rejected.status, Object.fromEntries(rejected.headers.entries()));
+    const body = await rejected.text();
+    res.end(body);
+    return;
+  }
+
   void nodeHandler(req, res);
 }).listen(baseConfig.PORT, baseConfig.HOST, () => {
   console.error("Server is running on port: ", baseConfig.PORT);
