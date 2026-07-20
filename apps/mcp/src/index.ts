@@ -28,6 +28,14 @@ const validateHost = localhostHostValidation();
 const validateOrigin = localhostOriginValidation();
 
 createServer((req, res) => {
+
+  if (req.url === "/health" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok" }));
+    return;
+  }
+
+
   if (!validateHost(req, res) || !validateOrigin(req, res)) return;
   void nodeHandler(req, res);
 }).listen(baseConfig.PORT, baseConfig.HOST, () => {
