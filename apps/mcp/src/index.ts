@@ -26,15 +26,15 @@ const handler = createMcpHandler(() => {
   return server;
 });
 
-const rawAlbHost = process.env.ALLOWED_AWS_ALB_HOST ?? "";
-const cleanAlbHost = rawAlbHost.replace(/^https?:\/\//, "").split(":")[0];
+// const rawAlbHost = process.env.ALLOWED_AWS_ALB_HOST ?? "";
+// const cleanAlbHost = rawAlbHost.replace(/^https?:\/\//, "").split(":")[0];
 
-const allowedHosts = [
-  "localhost",
-  "127.0.0.1",
-  "0.0.0.0",
-  cleanAlbHost,
-].filter((host): host is string => Boolean(host && host.trim().length > 0));
+// const allowedHosts = [
+//   "localhost",
+//   "127.0.0.1",
+//   "0.0.0.0",
+//   cleanAlbHost,
+// ].filter((host): host is string => Boolean(host && host.trim().length > 0));
 
 const nodeHandler = toNodeHandler(handler);
 
@@ -46,24 +46,24 @@ createServer( async (req, res) => {
     return;
   }
 
-  const protocol = req.headers["x-forwarded-proto"] || "http";
-  const fullUrl = `${protocol}://${req.headers.host || "localhost"}${req.url}`;
+  // const protocol = req.headers["x-forwarded-proto"] || "http";
+  // const fullUrl = `${protocol}://${req.headers.host || "localhost"}${req.url}`;
   
-  const webRequest = new Request(fullUrl, {
-    method: req.method,
-    headers: req.headers as Record<string, string>,
-  });
+  // const webRequest = new Request(fullUrl, {
+  //   method: req.method,
+  //   headers: req.headers as Record<string, string>,
+  // });
 
-  const rejected =
-    hostHeaderValidationResponse(webRequest, allowedHosts) ??
-    originValidationResponse(webRequest, allowedHosts);
+  // const rejected =
+  //   hostHeaderValidationResponse(webRequest, allowedHosts) ??
+  //   originValidationResponse(webRequest, allowedHosts);
 
-  if (rejected) {
-    res.writeHead(rejected.status, Object.fromEntries(rejected.headers.entries()));
-    const body = await rejected.text();
-    res.end(body);
-    return;
-  }
+  // if (rejected) {
+  //   res.writeHead(rejected.status, Object.fromEntries(rejected.headers.entries()));
+  //   const body = await rejected.text();
+  //   res.end(body);
+  //   return;
+  // }
 
   void nodeHandler(req, res);
 }).listen(baseConfig.PORT, baseConfig.HOST, () => {
