@@ -128,6 +128,19 @@ resource "aws_iam_role_policy_attachment" "attach_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role_policy" "execution_role_ssm_access" {
+  name = "${var.ecs_service_name}-ssm-access"
+  role = aws_iam_role.task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ssm:GetParameters", "ssm:GetParameter"]
+      Resource = "${var.aws_ssm_arn}/*"
+    }]
+  })
+}
 
 
 resource "aws_cloudwatch_log_group" "ecs" {
