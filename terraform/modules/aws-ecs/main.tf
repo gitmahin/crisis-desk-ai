@@ -1,7 +1,7 @@
 
 # Create Load balancer security group
 resource "aws_security_group" "alb_security_group" {
-  name_prefix = "${var.ecs_service_name}-alb-security-group"
+  name_prefix = "${var.prefix}-alb-sg-"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -27,7 +27,7 @@ resource "aws_security_group" "alb_security_group" {
 # Create Service task security groups
 # And attach alb security group as source
 resource "aws_security_group" "ecs_task_security_group" {
-  name_prefix = "${var.ecs_service_name}-task-"
+  name_prefix = "${var.prefix}-task-sg-"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -53,7 +53,7 @@ resource "aws_security_group" "ecs_task_security_group" {
 
 # Create application load balancer
 resource "aws_lb" "app_lb" {
-  name               = "${var.ecs_service_name}-alb"
+  name        = "${var.prefix}-alb"
   internal           = false # true if only accessed inside the VPC/VPN
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_security_group.id]
@@ -71,7 +71,7 @@ resource "aws_lb" "app_lb" {
 
 # Route all traffic to the task
 resource "aws_lb_target_group" "app_lb_tg" {
-  name        = "${var.ecs_service_name}-tg"
+  name = "${var.prefix}-tg"
   port        = var.container_port
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -108,7 +108,7 @@ resource "aws_lb_listener" "http" {
 
 # Role creation
 resource "aws_iam_role" "task_execution_role" {
-  name = "${var.ecs_service_name}-execution-role"
+  name_prefix = "${var.ecs_service_name}-texec-role-"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -166,16 +166,16 @@ resource "aws_ecs_task_definition" "task_def" {
         { name = "NODE_ENV", value = var.environment }
       ]
 
-      healthCheck = {
-        command = [
-          "CMD-SHELL",
-          "curl -f http://localhost:${var.container_port}${var.container_health_check_path} || exit 1"
-        ]
-        interval    = 30 # seconds between checks
-        timeout     = 5  # seconds before a check counts as failed
-        retries     = 3  # consecutive failures before marking unhealthy
-        startPeriod = 60 # grace period on container startup before checks count
-      }
+      # healthCheck = {
+      #   command = [
+      #     "CMD-SHELL",
+      #     "curl -f http://localhost:${var.container_port}${var.container_health_check_path} || exit 1"
+      #   ]
+      #   interval    = 30 # seconds between checks
+      #   timeout     = 5  # seconds before a check counts as failed
+      #   retries     = 3  # consecutive failures before marking unhealthy
+      #   startPeriod = 60 # grace period on container startup before checks count
+      # }
 
 
       logConfiguration = {

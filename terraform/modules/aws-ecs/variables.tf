@@ -71,3 +71,8 @@ variable "default_service_tags" {
 variable "aws_region" {
   type = string
 }
+
+variable "prefix" {
+  type = string
+  default = "crsdskai"
+}

@@ -29,6 +29,7 @@ const handler = createMcpHandler(() => {
 const allowedHosts = [
   "localhost",
   "127.0.0.1",
+  "0.0.0.0",
   "crisis-desk-ai-service-alb-1182768810.ap-south-1.elb.amazonaws.com", // Dont hard code it,
 ];
 
