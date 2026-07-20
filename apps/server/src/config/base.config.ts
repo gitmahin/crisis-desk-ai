@@ -1,4 +1,6 @@
+import { getSmmValue } from "@/libs/dynamic.config";
 import "dotenv/config";
+
 
 type BaseConfigType = {
   NODE_ENV: string;
@@ -9,7 +11,7 @@ type BaseConfigType = {
 
 export const BaseConfig: BaseConfigType = {
   NODE_ENV: process.env.NODE_ENV ?? "development",
-  GROQ_API_KEY: String(process.env.GROQ_AI_API_KEY),
-  DATABASE_URI: process.env.DATABASE_URL ?? "",
-  MCP_BASE_URL: process.env.MCP_BASE_URL ?? "http://localhost:5001",
+  GROQ_API_KEY: await getSmmValue("/crsai/prod/groq_api_key") ?? "",
+  DATABASE_URI:  await getSmmValue("/crsai/prod/database_url") ?? "",
+  MCP_BASE_URL: String(process.env.MCP_BASE_URL),
 };

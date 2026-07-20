@@ -1,3 +1,4 @@
+import { getSmmValue } from "@/libs/dynamic.config";
 import "dotenv/config";
 type AuthConfigType = {
   JWT_ACCESS_TOKEN: string;
@@ -5,6 +6,6 @@ type AuthConfigType = {
 };
 
 export const AuthConfig: AuthConfigType = {
-  JWT_ACCESS_TOKEN: process.env.JWT_ACCESS_TOKEN_SECRET!,
-  JWT_REFRESH_TOKEN: process.env.JWT_REFRESH_TOKEN_SECRET!,
+  JWT_ACCESS_TOKEN: await getSmmValue("/crsai/prod/jwt_access_secret_key") ?? "",
+  JWT_REFRESH_TOKEN: await getSmmValue("/crsai/prod/jwt_refresh_secret_key") ?? "",
 };
