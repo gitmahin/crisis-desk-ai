@@ -38,6 +38,8 @@ env:
     MONGO_URI: ${{ secrets.MONGO_URI }}
     VOYAGE_AI_API_KEY: ${{ secrets.VOYAGE_AI_API_KEY }}
 
+    ALLOWED_AWS_ALB_HOST: ${{vars.ALLOWED_AWS_ALB_HOST}}
+
 jobs:
     base-setup:
         name: Base Setup For MCP Server docker build
@@ -108,6 +110,7 @@ jobs:
                       REDIS_PORT=${{ env.REDIS_PORT }}
                       MONGO_URI=${{ env.MONGO_URI }}
                       VOYAGE_AI_API_KEY=${{ env.VOYAGE_AI_API_KEY }}
+                      ALLOWED_AWS_ALB_HOST=${{env.ALLOWED_AWS_ALB_HOST}}
 
                   tags: ${{env.DOCKER_USERNAME}}/${{ env.MCP_APP_NAME }}:${{env.IMAGE_TAG}}
 
@@ -129,6 +132,9 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
+            - name: Serverless Login
+              run: |
+                  serverless config credentials --provider aws --key ${{ env.AWS_ACCESS_KEY_ID }} --secret ${{ env.AWS_SECRET_ACCESS_KEY }}
             - uses: pnpm/action-setup@v4
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter server run deploy
