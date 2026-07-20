@@ -4,7 +4,10 @@ import {
   localhostOriginValidation,
   toNodeHandler,
 } from "@modelcontextprotocol/node";
-
+import {
+  hostHeaderValidation,
+  originValidation,
+} from "@modelcontextprotocol/node";
 import z4 from "zod/v4";
 import { baseConfig } from "./config";
 import { createServer } from "node:http";
@@ -23,9 +26,16 @@ const handler = createMcpHandler(() => {
   return server;
 });
 
+const allowedHosts = [
+  "localhost",
+  "127.0.0.1",
+  "crisis-desk-ai-service-alb-1182768810.ap-south-1.elb.amazonaws.com", // Dont hard code it,
+];
+
+
 const nodeHandler = toNodeHandler(handler);
-const validateHost = localhostHostValidation();
-const validateOrigin = localhostOriginValidation();
+const validateHost = hostHeaderValidation(allowedHosts);
+const validateOrigin = originValidation(allowedHosts);
 
 createServer((req, res) => {
 

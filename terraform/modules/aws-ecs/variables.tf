@@ -50,12 +50,12 @@ variable "container_port" {
 
 variable "task_cpu" {
   type    = number
-  default = 1024
+  default = 2048
 }
 
 variable "task_memory" {
   type    = number
-  default = 2048
+  default = 4096
 }
 
 variable "desired_task_count" {
