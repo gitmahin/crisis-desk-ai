@@ -29,9 +29,19 @@ env:
     MCP_IMAGE_PORT: 5000
     MCP_IMAGE_HOST: 0.0.0.0
     MCP_BASE_URL: ${{vars.MCP_BASE_URL}}
+
+    REDIS_USERNAME: ${{ secrets.REDIS_USERNAME }}
+    REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+    REDIS_HOST: ${{ secrets.REDIS_HOST }}
+    REDIS_PORT: ${{ secrets.REDIS_PORT }}
+
+    MONGO_URI: ${{ secrets.MONGO_URI }}
+    VOYAGE_AI_API_KEY: ${{ secrets.VOYAGE_AI_API_KEY }}
+
 jobs:
     base-setup:
         name: Base Setup For MCP Server docker build
+        environment: Production
         runs-on: ubuntu-latest
         outputs:
             image_tag: ${{ steps.setup_env_variables.outputs.IMAGE_TAG }}
@@ -44,7 +54,7 @@ jobs:
               run: |
                   MCP_APP_NAME=$(node -p "require('./apps/mcp/package.json').name")
                   VERSION=$(node -p "require('./package.json').version")
-                  DEPL_ENV=$([ "$${{github.event.inputs.environment}}" = "production" ] && echo "" || echo "-dev")
+                  DEPL_ENV=$([ "${{github.event.inputs.environment}}" = "production" ] && echo "" || echo "-dev")
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
                   echo "mcp_app_name=$MCP_APP_NAME-crisis-desk-ai" >> $GITHUB_OUTPUT
 
@@ -62,6 +72,8 @@ jobs:
 
     build-push-mcp:
         name: Build docker image and push to aws public repository
+        environment: Production
+        needs: base-setup
         runs-on: ubuntu-latest
         env:
             IMAGE_TAG: ${{ needs.base-setup.outputs.IMAGE_TAG }}
@@ -70,10 +82,10 @@ jobs:
             - name: Checkout Repository
               uses: actions/checkout@v4
             - name: Login to Docker Hub
-              uses: docker/login-action@v4
+              uses: docker/login-action@v3
               with:
-                username: ${{ env.DOCKER_USERNAME }}
-                password: ${{ env.DOCKER_ACCESS_TOKEN }}
+                  username: ${{ env.DOCKER_USERNAME }}
+                  password: ${{ env.DOCKER_ACCESS_TOKEN }}
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v4
@@ -90,10 +102,18 @@ jobs:
                       GROQ_AI_API_KEY=${{env.GROQ_AI_API_KEY}}
                       MCP_IMAGE_HOST=${{env.MCP_IMAGE_HOST}}
                       MCP_IMAGE_PORT=${{env.MCP_IMAGE_PORT}}
+                      REDIS_USERNAME: ${{ env.REDIS_USERNAME }}
+                      REDIS_PASSWORD: ${{ env.REDIS_PASSWORD }}
+                      REDIS_HOST: ${{ env.REDIS_HOST }}
+                      REDIS_PORT: ${{ env.REDIS_PORT }}
+                      MONGO_URI: ${{ env.MONGO_URI }}
+                      VOYAGE_AI_API_KEY: ${{ env.VOYAGE_AI_API_KEY }}
+
                   tags: ${{env.DOCKER_USERNAME}}/${{ env.MCP_APP_NAME }}:${{env.IMAGE_TAG}}
 
     package-deploy-serverless:
         name: Package serverless project and deploy to AWS Lambda
+        environment: Production
         runs-on: ubuntu-latest
         strategy:
             matrix:
@@ -104,14 +124,14 @@ jobs:
             - name: Swap Serverless Config File
               id: swap-serverless-config-file
               run: |
-                cp apps/server/serverless.prod.yml apps/server/serverless.yml
+                  cp apps/server/serverless.prod.yml apps/server/serverless.yml
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
               with:
                   node-version: ${{ matrix.node-version }}
             - uses: pnpm/action-setup@v4
               with:
-               version: 11
+                  version: 11
             - run: pnpm install --frozen-lockfile
             - run: pnpm --filter server run deploy
               env:
