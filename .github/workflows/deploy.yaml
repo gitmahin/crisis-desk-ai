@@ -44,19 +44,19 @@ jobs:
         environment: Production
         runs-on: ubuntu-latest
         outputs:
-            image_tag: ${{ steps.setup_env_variables.outputs.IMAGE_TAG }}
-            skip_push: ${{ steps.setup_env_variables.outputs.SKIP_PUSH }}
+            image_tag: ${{ steps.build-release-tag.outputs.IMAGE_TAG }}
+            mcp_app_name: ${{ steps.build-release-tag.outputs.MCP_APP_NAME }}
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
             - name: Build Release Tag
               id: build-release-tag
               run: |
-                  MCP_APP_NAME=$(node -p "require('./apps/mcp/package.json').name")
+                  APP_NAME=$(node -p "require('./apps/mcp/package.json').name")
                   VERSION=$(node -p "require('./package.json').version")
                   DEPL_ENV=$([ "${{github.event.inputs.environment}}" = "production" ] && echo "" || echo "-dev")
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
-                  echo "mcp_app_name=$MCP_APP_NAME-crisis-desk-ai" >> $GITHUB_OUTPUT
+                  echo "MCP_APP_NAME=$APP_NAME-crisis-desk-ai" >> $GITHUB_OUTPUT
 
                   if [[ "${{ env.TARGET_BRANCH }}" == "main" && "${{ github.event.inputs.release }}" == "latest" ]]; then
                       echo "IMAGE_TAG=latest$DEPL_ENV" >> $GITHUB_OUTPUT
@@ -76,7 +76,7 @@ jobs:
         needs: base-setup
         runs-on: ubuntu-latest
         env:
-            IMAGE_TAG: ${{ needs.base-setup.outputs.IMAGE_TAG }}
+            IMAGE_TAG: ${{ needs.base-setup.outputs.image_tag }}
             MCP_APP_NAME: ${{ needs.base-setup.outputs.mcp_app_name }}
         steps:
             - name: Checkout Repository
@@ -102,12 +102,12 @@ jobs:
                       GROQ_AI_API_KEY=${{env.GROQ_AI_API_KEY}}
                       MCP_IMAGE_HOST=${{env.MCP_IMAGE_HOST}}
                       MCP_IMAGE_PORT=${{env.MCP_IMAGE_PORT}}
-                      REDIS_USERNAME: ${{ env.REDIS_USERNAME }}
-                      REDIS_PASSWORD: ${{ env.REDIS_PASSWORD }}
-                      REDIS_HOST: ${{ env.REDIS_HOST }}
-                      REDIS_PORT: ${{ env.REDIS_PORT }}
-                      MONGO_URI: ${{ env.MONGO_URI }}
-                      VOYAGE_AI_API_KEY: ${{ env.VOYAGE_AI_API_KEY }}
+                      REDIS_USERNAME=${{ env.REDIS_USERNAME }}
+                      REDIS_PASSWORD=${{ env.REDIS_PASSWORD }}
+                      REDIS_HOST=${{ env.REDIS_HOST }}
+                      REDIS_PORT=${{ env.REDIS_PORT }}
+                      MONGO_URI=${{ env.MONGO_URI }}
+                      VOYAGE_AI_API_KEY=${{ env.VOYAGE_AI_API_KEY }}
 
                   tags: ${{env.DOCKER_USERNAME}}/${{ env.MCP_APP_NAME }}:${{env.IMAGE_TAG}}
 
