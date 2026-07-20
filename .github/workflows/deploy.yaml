@@ -95,11 +95,12 @@ jobs:
             matrix:
                 node-version: [24.x]
         steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
             - name: Swap Serverless Config File
               id: swap-serverless-config-file
               run: |
                 cp serverless.prod.yml serverless.
-            - uses: actions/checkout@v3
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v3
               with:
