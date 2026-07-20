@@ -76,3 +76,8 @@ variable "prefix" {
   type = string
   default = "crsdskai"
 }
+
+variable "aws_ssm_arn" {
+  type = string
+  default = "arn:aws:ssm:ap-south-1:565718662061:parameter"
+}

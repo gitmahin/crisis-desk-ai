@@ -31,9 +31,9 @@ resource "aws_security_group" "ecs_task_security_group" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port   = var.container_port
-    to_port     = var.container_port
-    protocol    = "tcp"
+    from_port       = var.container_port
+    to_port         = var.container_port
+    protocol        = "tcp"
     security_groups = [aws_security_group.alb_security_group.id]
   }
 
@@ -53,16 +53,16 @@ resource "aws_security_group" "ecs_task_security_group" {
 
 # Create application load balancer
 resource "aws_lb" "app_lb" {
-  name        = "${var.prefix}-alb"
+  name               = "${var.prefix}-alb"
   internal           = false # true if only accessed inside the VPC/VPN
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_security_group.id]
   subnets            = var.vpc_public_subnets
-  
+
 
   enable_deletion_protection = false # set true in production once stable
 
-  depends_on = [ aws_security_group.alb_security_group ]
+  depends_on = [aws_security_group.alb_security_group]
 
   lifecycle {
     create_before_destroy = true
@@ -71,7 +71,7 @@ resource "aws_lb" "app_lb" {
 
 # Route all traffic to the task
 resource "aws_lb_target_group" "app_lb_tg" {
-  name = "${var.prefix}-tg"
+  name        = "${var.prefix}-tg"
   port        = var.container_port
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -103,7 +103,7 @@ resource "aws_lb_listener" "http" {
     target_group_arn = aws_lb_target_group.app_lb_tg.arn
   }
 
-  depends_on = [ aws_lb_target_group.app_lb_tg, aws_lb.app_lb ]
+  depends_on = [aws_lb_target_group.app_lb_tg, aws_lb.app_lb]
 }
 
 # Role creation
@@ -162,6 +162,42 @@ resource "aws_ecs_task_definition" "task_def" {
         }
       ]
 
+      #  inject secrect directly from AWS SSM Parameter Store into process.env
+      secrets = [
+        {
+          name      = "DATABASE_URL"
+          valueFrom = "${var.aws_ssm_arn}/database_url"
+        },
+        {
+          name      = "MONGO_URI"
+          valueFrom = "${var.aws_ssm_arn}/mongo_url"
+        },
+        {
+          name      = "GROQ_AI_API_KEY"
+          valueFrom = "${var.aws_ssm_arn}/groq_api_key"
+        },
+        {
+          name      = "VOYAGE_AI_API_KEY"
+          valueFrom = "${var.aws_ssm_arn}/voyage_ai_api_key"
+        },
+        {
+          name      = "REDIS_USERNAME"
+          valueFrom = "${var.aws_ssm_arn}/redis_username"
+        },
+        {
+          name      = "REDIS_PASSWORD"
+          valueFrom = "${var.aws_ssm_arn}/redis_password"
+        },
+        {
+          name      = "REDIS_HOST"
+          valueFrom = "${var.aws_ssm_arn}/redis_host"
+        },
+        {
+          name      = "REDIS_PORT"
+          valueFrom = "${var.aws_ssm_arn}/redis_port"
+        },
+
+      ]
       environment = [
         { name = "NODE_ENV", value = var.environment }
       ]
@@ -230,7 +266,7 @@ resource "aws_ecs_service" "ecs_service" {
 
 
   lifecycle {
-    ignore_changes = [task_definition]
+    ignore_changes        = [task_definition]
     create_before_destroy = true
   }
 }
