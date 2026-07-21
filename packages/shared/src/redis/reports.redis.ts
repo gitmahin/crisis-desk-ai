@@ -101,7 +101,7 @@ export class ReportsRedis implements IReportsRedis {
     const request_count_num = Number(request_count);
     const ttl_num = Number(ttl);
 
-    // console.log(`ttl: ${ttl_num} | request count: ${request_count_num}`);
+    // console.error(`ttl: ${ttl_num} | request count: ${request_count_num}`);
 
     // If report ttl is less or equal to required ttl
     // and request_count is less than 3 times

@@ -9,14 +9,26 @@ import {
   type ReadResourceCallback,
   type ReadResourceTemplateCallback,
 } from "@modelcontextprotocol/server";
-import { redisClient, reportRedis } from "@/lib/redis";
+import {  reportRedis } from "@/lib/redis";
 import { connectRedis } from "@/lib/redis";
 import { MCPResourceException } from "@/lib/exceptions-handlers";
 import { getPreparedReportStats } from "@/prepared-statements";
 import { SystemCustomErrorCode } from "@repo/shared";
 import { reportEmbedding } from "@/rag";
 
+/**
+ * Registrar responsible for exposing incident report data to the MCP server.
+ * 
+ * This class maps specific URIs (Uniform Resource Identifiers) to database 
+ * operations, allowing the LLM to query historical reports, analyze stats, 
+ * and perform semantic searches for similar incidents.
+ */
 export class ReportResources extends McpRegistrar {
+
+    /**
+   * Registers the 'all-reports' resource.
+   * Enables paginated browsing of reports with optional category and urgency filters.
+   */
   registerAllReports() {
     this.server.registerResource(
       "all-reports",
@@ -33,6 +45,10 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
+    /**
+   * Registers the 'get-report-by-id' resource.
+   * Allows the AI to fetch granular details about a specific incident using its unique ID.
+   */
   registerGetReportById() {
     this.server.registerResource(
       "get-report-by-id",
@@ -47,6 +63,10 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
+    /**
+   * Registers the 'get-report-analytics' resource.
+   * Provides a high-level summary of system-wide incident statistics.
+   */
   registerGetReportAnalytics() {
     this.server.registerResource(
       "get-report-analytics",
@@ -61,6 +81,10 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
+    /**
+   * Registers the 'get-similar-reports' resource.
+   * Connects the MCP server to the Vector Search engine for semantic similarity queries.
+   */
   registerGetSimiliarReports() {
     this.server.registerResource(
       "get-similar-reports",
@@ -75,6 +99,9 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
+   /**
+   * Initializes all report-related resource routes.
+   */
   init() {
     this.registerAllReports();
     this.registerGetReportById();
@@ -83,13 +110,22 @@ export class ReportResources extends McpRegistrar {
   }
 }
 
+/**
+ * Handler for paginated report retrieval.
+ * 
+ * Logic Flow:
+ * 1. Checks Redis cache for existing results to reduce DB load.
+ * 2. If cache miss, queries PostgreSQL via Drizzle with dynamic filters.
+ * 3. Joins with 'usersTable' to provide reporter context.
+ * 4. Populates Redis cache with new results before returning.
+ */
 const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
   const page = Number(variables.page) || 1;
   const category =
     variables.category !== "none" ? variables.category : undefined;
   const urgency = variables.urgency !== "none" ? variables.urgency : undefined;
 
-  // console.log(`page: ${page} | cat: ${category} | urgency: ${urgency}`);
+  // console.error(`page: ${page} | cat: ${category} | urgency: ${urgency}`);
 
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -140,10 +176,12 @@ const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
     .limit(limit)
     .offset(offset);
 
-  // console.log("reports here", reports);
+  // console.error("reports here", reports);
 
   await connectRedis();
-  // console.log("redis response", await redisClient.ping());
+  // console.error("redis response", await redisClient.ping());
+
+  // Update Cache
   await reportRedis.cacheNReports(reports, page, 30);
 
   if (reports.length > 0) {
@@ -156,6 +194,13 @@ const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
   return new MCPResourceResponse(uri.href, JSON.stringify({})).toObject();
 };
 
+
+/**
+ * Handler for fetching a single report by ID.
+ * Uses a prepared statement for optimized execution and SQL injection protection.
+ * 
+ * @throws {MCPResourceException} 404 if the report ID does not exist.
+ */
 const getReportBySpecificId: ReadResourceTemplateCallback = async (
   uri,
   variables
@@ -203,6 +248,10 @@ const getReportBySpecificId: ReadResourceTemplateCallback = async (
   return new MCPResourceResponse(uri.href, JSON.stringify(result)).toObject();
 };
 
+/**
+ * Handler for incident analytics.
+ * Aggregates database state into high-level metrics for crisis monitoring.
+ */
 const getReportAnalyticsSummary: ReadResourceCallback = async (uri) => {
   const preparedReport = await getPreparedReportStats();
   const [result] = await preparedReport.execute();
@@ -237,12 +286,16 @@ const getReportAnalyticsSummary: ReadResourceCallback = async (uri) => {
   return new MCPResourceResponse(uri.href, JSON.stringify(data)).toObject();
 };
 
+/**
+ * Handler for semantic similarity search.
+ * Bridges the PostgreSQL relational data with MongoDB Vector Search (RAG).
+ */
 const getSimilarReports: ReadResourceTemplateCallback = async (
   uri,
   variables
 ) => {
   const query = decodeURIComponent(variables.query as string);
-  // console.log("query is here", query);
+  // console.error("query is here", query);
   await mongoConnect();
   const response = await reportEmbedding.getResponseFromVectorSearch(
     query as string

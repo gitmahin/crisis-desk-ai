@@ -66,11 +66,13 @@ export const attachAgent = async (
 
     if (toolResult?.isError) {
       const error = toolResult._meta?.error;
-      // @ts-ignore
+     
       throw new ApiError(
         400,
+         // @ts-ignore
         { title: "", message: error.message, code: error.code },
         "",
+         // @ts-ignore
         [SystemCustomErrorMsgByCode[error.code]]
       );
     }
@@ -122,12 +124,13 @@ export const useMCPTool = async (
 
   // @ts-ignore
   const status = Number(toolResult._meta.status) ?? 200;
-  // @ts-ignore
+
   return res
     .status(status)
     .json(
       new ApiResponse(
         status,
+         // @ts-ignore
         toolResult.content[0].text,
         toolResult.structuredContent
       )

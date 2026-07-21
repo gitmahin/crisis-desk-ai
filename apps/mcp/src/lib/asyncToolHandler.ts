@@ -1,4 +1,4 @@
-import type { ServerContext, ToolCallback } from "@modelcontextprotocol/server";
+import type { ServerContext } from "@modelcontextprotocol/server";
 import { handleMCPError } from "./exceptions-handlers";
 import { MCPException } from "@/blueprints";
 
