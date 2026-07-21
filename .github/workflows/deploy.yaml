@@ -28,6 +28,8 @@ env:
     MCP_IMAGE_HOST: 0.0.0.0
     MCP_BASE_URL: ${{vars.MCP_BASE_URL}}
 
+    SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+
 jobs:
     base-setup:
         name: Base Setup For MCP Server docker build
@@ -116,6 +118,8 @@ jobs:
 
             - name: Login to serverless
               working-directory: apps/server
+              env:
+                SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
               run: |
                   serverless config credentials --provider aws --key ${{ env.AWS_ACCESS_KEY_ID }} --secret ${{ env.AWS_SECRET_ACCESS_KEY }} && serverless login
             - name: Setup pnpm
@@ -126,4 +130,5 @@ jobs:
               env:
                   AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+                  SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
                   MCP_BASE_URL: ${{ENV.MCP_BASE_URL}}
