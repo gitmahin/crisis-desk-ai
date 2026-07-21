@@ -28,6 +28,19 @@ provider:
   # https://www.serverless.com/framework/docs/providers/aws/guide/domains
   # domain: api.example.com
 
+  iam:
+    role:
+      name: serverless-crsdskai-ssm-role
+      statements:
+        - Effect: 'Allow'
+          Resource: '*'
+          Action: 
+          - "ssm:GetParameter"
+          - "ssm:GetParameters"
+          - "ssm:GetParametersByPath"
+          - "ssm:GetParameterHistory"
+          - "ssm:DescribeParameters"
+
 functions:
   api:
     handler: src/server.handler
