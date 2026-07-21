@@ -25,7 +25,7 @@ provider:
 
   iam:
     role:
-      name: serverless-crsdskai-ssm-role-dev
+      name: serverless-crsdskai-ssm-role-prod
       statements:
         - Effect: 'Allow'
           Resource: '*'
