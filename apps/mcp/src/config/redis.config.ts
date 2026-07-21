@@ -1,14 +1,10 @@
-import "dotenv/config";
-export type RedisConfigType = {
-  REDIS_USERNAME: string;
-  REDIS_PASS: string;
-  REDIS_HOST: string;
-  REDIS_PORT: string | number;
-};
+import { getSmmValue } from "@repo/shared";
+
+import type { RedisConfigType } from "@repo/types"
 
 export const RedisConfig: RedisConfigType = {
-  REDIS_USERNAME: process.env.REDIS_USERNAME!,
-  REDIS_PASS: process.env.REDIS_PASSWORD!,
-  REDIS_HOST: process.env.REDIS_HOST!,
-  REDIS_PORT: process.env.REDIS_PORT!,
+  REDIS_USERNAME: await getSmmValue("/crsai/prod/redis_username") ?? "",
+  REDIS_PASS: await getSmmValue("/crsai/prod/redis_password") ?? "",
+  REDIS_HOST: await getSmmValue("/crsai/prod/redis_host") ?? "",
+  REDIS_PORT: Number(await getSmmValue("/crsai/prod/redis_port")),
 };

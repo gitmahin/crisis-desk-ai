@@ -1,3 +1,4 @@
+import { getSmmValue } from "@repo/shared";
 import "dotenv/config";
 
 type BaseConfigType = {
@@ -12,8 +13,8 @@ type BaseConfigType = {
 export const baseConfig: BaseConfigType = {
   PORT: Number(process.env.PORT!),
   HOST: String(process.env.HOST!),
-  DATABASE_URL: String(process.env.DATABASE_URL!),
-  GROQ_API_KEY: String(process.env.GROQ_AI_API_KEY!),
-  VOYAGE_API_KEY: String(process.env.VOYAGE_AI_API_KEY!),
-  MONGO_URI: String(process.env.MONGO_URI!),
+  DATABASE_URL: await getSmmValue("/crsai/prod/database_url") ?? "",
+  GROQ_API_KEY: await getSmmValue("/crsai/prod/groq_api_key") ?? "",
+  VOYAGE_API_KEY: await getSmmValue("/crsai/prod/voyage_ai_api_key") ?? "",
+  MONGO_URI: await getSmmValue("/crsai/prod/mongo_url") ?? "",
 };
