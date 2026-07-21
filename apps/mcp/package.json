@@ -9,6 +9,7 @@
     "server:inspect": "set DANGEROUSLY_OMIT_AUTH=true && npx @modelcontextprotocol/inspector http://127.0.0.1:5000",
     "build:watch": "tsdown --watch",
     "db:reset": "tsx ./src/lib/reset.db.ts",
+        "gen:docs": "typedoc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

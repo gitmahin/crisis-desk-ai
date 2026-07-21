@@ -12,7 +12,8 @@
     "check-types": "turbo run check-types",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
-    "db:seed": "turbo run db:seed",
+    "gen:docs": "typedoc",
+    "gen:docs-all": "npm run docs --workspaces --if-present",
     "clean": "turbo run clean && rm -rf node_modules dist .turbo && echo 'Root Cleanup complete!'"
   },
   "devDependencies": {
@@ -29,6 +30,7 @@
     "tsdown": "^0.22.3",
     "tsx": "^4.22.4",
     "turbo": "^2.10.4",
+    "typedoc": "^0.28.20",
     "typescript": "5.9.2"
   },
   "dependencies": {
