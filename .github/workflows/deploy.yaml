@@ -63,7 +63,7 @@ jobs:
           fi
 
   build-push-mcp:
-    name: Build docker image and push to aws public repository
+    name: Build docker image and push to Docker hub 
     environment: Production
     needs: base-setup
     runs-on: ubuntu-latest
