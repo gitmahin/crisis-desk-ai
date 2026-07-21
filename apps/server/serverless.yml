@@ -4,7 +4,6 @@ org: serverlessmahin
 app: crisis-desk-ai
 # "service" is the name of this project. This will also be added to your AWS resource names.
 service: serverless
-useDotenv: true
 
 build:
   esbuild: false # keep esbuild false. we have to use serverless-esbuild for monorepo structure
@@ -18,11 +17,6 @@ provider:
     # pass environment variables during deploying
     NODE_OPTIONS: --enable-source-maps
     NODE_ENV: production
-    DATABASE_URL: ${env:DATABASE_URL}
-    GROQ_AI_API_KEY: ${env:GROQ_AI_API_KEY}
-    JWT_ACCESS_TOKEN_SECRET: ${env:JWT_ACCESS_TOKEN_SECRET}
-    JWT_REFRESH_TOKEN_SECRET: ${env:JWT_REFRESH_TOKEN_SECRET}
-    MCP_BASE_URL: ${env:MCP_BASE_URL}
   apiGateway:
     shouldStartNameWithService: true
   # Uncomment to easily set up a custom domain. Read the docs for more details:
@@ -53,14 +47,6 @@ plugins:
   - serverless-offline
 
 custom:
-  dotenv:
-    exclude:
-      - AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY 
-      - JWT_ACCESS_TOKEN_SECRET
-      - JWT_REFRESH_TOKEN_SECRET
-      - GROQ_AI_API_KEY
-      - DATABASE_URL
   esbuild:
     bundle: true
     minify: true
