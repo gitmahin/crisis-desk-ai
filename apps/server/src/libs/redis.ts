@@ -1,4 +1,3 @@
-
 import type { RedisClientType } from "redis";
 import { createRedisClient, ReportsRedis } from "@repo/shared";
 import { RedisConfig } from "@/config";

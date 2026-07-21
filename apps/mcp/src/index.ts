@@ -1,4 +1,9 @@
-import { createMcpHandler, hostHeaderValidationResponse, McpServer, originValidationResponse } from "@modelcontextprotocol/server";
+import {
+  createMcpHandler,
+  hostHeaderValidationResponse,
+  McpServer,
+  originValidationResponse,
+} from "@modelcontextprotocol/server";
 import {
   localhostHostValidation,
   localhostOriginValidation,
@@ -40,11 +45,10 @@ const handler = createMcpHandler(() => {
 
 const nodeHandler = toNodeHandler(handler);
 
-createServer( async (req, res) => {
-
+createServer(async (req, res) => {
   if (req.url === "/health" && req.method === "GET") {
-    await mongoConnect()
-    await connectRedis()
+    await mongoConnect();
+    await connectRedis();
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok" }));
     return;
@@ -52,7 +56,7 @@ createServer( async (req, res) => {
 
   // const protocol = req.headers["x-forwarded-proto"] || "http";
   // const fullUrl = `${protocol}://${req.headers.host || "localhost"}${req.url}`;
-  
+
   // const webRequest = new Request(fullUrl, {
   //   method: req.method,
   //   headers: req.headers as Record<string, string>,

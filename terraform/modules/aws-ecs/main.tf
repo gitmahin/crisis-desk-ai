@@ -176,41 +176,41 @@ resource "aws_ecs_task_definition" "task_def" {
       ]
 
       #  inject secrect directly from AWS SSM Parameter Store into process.env
-      # secrets = [
-      #   {
-      #     name      = "DATABASE_URL"
-      #     valueFrom = "${var.aws_ssm_arn}/database_url"
-      #   },
-      #   {
-      #     name      = "MONGO_URI"
-      #     valueFrom = "${var.aws_ssm_arn}/mongo_url"
-      #   },
-      #   {
-      #     name      = "GROQ_AI_API_KEY"
-      #     valueFrom = "${var.aws_ssm_arn}/groq_api_key"
-      #   },
-      #   {
-      #     name      = "VOYAGE_AI_API_KEY"
-      #     valueFrom = "${var.aws_ssm_arn}/voyage_ai_api_key"
-      #   },
-      #   {
-      #     name      = "REDIS_USERNAME"
-      #     valueFrom = "${var.aws_ssm_arn}/redis_username"
-      #   },
-      #   {
-      #     name      = "REDIS_PASSWORD"
-      #     valueFrom = "${var.aws_ssm_arn}/redis_password"
-      #   },
-      #   {
-      #     name      = "REDIS_HOST"
-      #     valueFrom = "${var.aws_ssm_arn}/redis_host"
-      #   },
-      #   {
-      #     name      = "REDIS_PORT"
-      #     valueFrom = "${var.aws_ssm_arn}/redis_port"
-      #   },
+      secrets = [
+        {
+          name      = "DATABASE_URL"
+          valueFrom = "${var.aws_ssm_arn}/database_url"
+        },
+        {
+          name      = "MONGO_URI"
+          valueFrom = "${var.aws_ssm_arn}/mongo_url"
+        },
+        {
+          name      = "GROQ_AI_API_KEY"
+          valueFrom = "${var.aws_ssm_arn}/groq_api_key"
+        },
+        {
+          name      = "VOYAGE_AI_API_KEY"
+          valueFrom = "${var.aws_ssm_arn}/voyage_ai_api_key"
+        },
+        {
+          name      = "REDIS_USERNAME"
+          valueFrom = "${var.aws_ssm_arn}/redis_username"
+        },
+        {
+          name      = "REDIS_PASSWORD"
+          valueFrom = "${var.aws_ssm_arn}/redis_password"
+        },
+        {
+          name      = "REDIS_HOST"
+          valueFrom = "${var.aws_ssm_arn}/redis_host"
+        },
+        {
+          name      = "REDIS_PORT"
+          valueFrom = "${var.aws_ssm_arn}/redis_port"
+        },
 
-      # ]
+      ]
       environment = [
         { name = "NODE_ENV", value = var.environment }
       ]

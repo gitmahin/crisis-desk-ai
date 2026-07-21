@@ -114,10 +114,10 @@ jobs:
             - name: Install Serverless
               run: npm install -g serverless
 
-            - name: Serverless Login
+            - name: Login to serverless
               working-directory: apps/server
               run: |
-                  serverless config credentials --provider aws --key ${{ env.AWS_ACCESS_KEY_ID }} --secret ${{ env.AWS_SECRET_ACCESS_KEY }}
+                  serverless config credentials --provider aws --key ${{ env.AWS_ACCESS_KEY_ID }} --secret ${{ env.AWS_SECRET_ACCESS_KEY }} && serverless login
             - name: Setup pnpm
               uses: pnpm/action-setup@v4
 
