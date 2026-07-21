@@ -115,7 +115,6 @@ jobs:
                   node-version: ${{ matrix.node-version }}
             - name: Install Serverless
               run: npm install -g serverless
-
             - name: Login to serverless
               working-directory: apps/server
               env:
@@ -124,9 +123,10 @@ jobs:
                   serverless config credentials --provider aws --key ${{ env.AWS_ACCESS_KEY_ID }} --secret ${{ env.AWS_SECRET_ACCESS_KEY }} && serverless login
             - name: Setup pnpm
               uses: pnpm/action-setup@v4
-
-            - name: Install & Deploy
-              run: pnpm install --frozen-lockfile && pnpm --filter server run deploy
+            - name: Install packages
+              run: pnpm install
+            - name: Deploy serverless
+              run: pwd && pnpm --filter server run deploy
               env:
                   AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
                   AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
