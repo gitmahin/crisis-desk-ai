@@ -8,6 +8,26 @@ import { handleMCPError } from "./exceptions-handlers";
 
 type AnyResourceCallback = ReadResourceCallback | ReadResourceTemplateCallback;
 
+/**
+ * A Higher-Order Function (HOF) that wraps MCP resource handlers with global error handling.
+ *
+ * This wrapper catches both synchronous and asynchronous exceptions, transforming them
+ * into standardized MCP error responses. It ensures the server remains stable and
+ * provides the AI agent with a protocol-compliant error message.
+ *
+ * @template T - The specific type of the resource callback being wrapped.
+ * @param requestHandlerFn - The actual business logic function for the resource.
+ * @returns A "protected" version of the handler that manages its own lifecycle and errors.
+ *
+ * @example
+ * this.server.registerResource(
+ *   "my-resource",
+ *   new ResourceTemplate("..."),
+ *   asyncResourceHandler(async (uri, vars) => {
+ *      // Your logic here - no manual try/catch needed!
+ *   })
+ * );
+ */
 export function asyncResourceHandler<T extends AnyResourceCallback>(
   requestHandlerFn: T
 ): T {
@@ -16,7 +36,7 @@ export function asyncResourceHandler<T extends AnyResourceCallback>(
       // @ts-expect-error - spreading generic args into the original fn
       return await requestHandlerFn(...args);
     } catch (error) {
-      // console.log("Error here:", error);
+      // console.error("Error here:", error);
       const errorResponse =
         error instanceof MCPException
           ? error.toErrorResponse()

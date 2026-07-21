@@ -9,7 +9,7 @@ export async function resetDb<T extends Record<string, unknown>>(
     process.exit(1);
   }
   try {
-    console.log("⏳ Resetting database...");
+    console.error("⏳ Resetting database...");
     const start = Date.now();
 
     const sqlQueries = sql`
@@ -57,7 +57,7 @@ export async function resetDb<T extends Record<string, unknown>>(
     await postgres.execute(sqlQueries);
 
     const end = Date.now();
-    console.log(`✅ Reset end & took ${end - start}ms\n`);
+    console.error(`✅ Reset end & took ${end - start}ms\n`);
     process.exit(0);
   } catch (error) {
     console.error("❌ Reset failed");

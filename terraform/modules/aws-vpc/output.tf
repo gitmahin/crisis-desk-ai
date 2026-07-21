@@ -1,3 +1,8 @@
+# ==============================================================================
+# Networking Outputs
+# These values are exported for use by other modules or external automation.
+# ==============================================================================
+
 output "vpc_id_ouput" {
   type = string
   value = data.aws_vpc.teambinary.id

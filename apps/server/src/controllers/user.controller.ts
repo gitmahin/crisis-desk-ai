@@ -21,7 +21,23 @@ import z4 from "zod/v4";
 import { connectRedis } from "@/libs/redis";
 import { userRedisService } from "@/redis-a/user.redis";
 
+/**
+ * Controller responsible for User Identity and Access Management (IAM).
+ *
+ * Handles registration, authentication, and session persistence
+ * across PostgreSQL and Redis.
+ */
 export class UserController {
+  /**
+   * Registers a new user and initiates a session.
+   *
+   * Process:
+   * 1. Validate input via Zod.
+   * 2. Hash password using Bcrypt (10 salt rounds).
+   * 3. Persist to PostgreSQL.
+   * 4. Issue JWT tokens and set cookies.
+   * 5. Cache session metadata in Redis.
+   */
   async createUser(req: Request, res: Response) {
     const payload = req.body;
 
@@ -84,6 +100,7 @@ export class UserController {
 
     await connectRedis();
 
+    // Centralized token and session management
     await userRedisService.hashUserLoginInfo(newUser.id, {
       email: newUser.email as string,
       role: newUser.role,
@@ -94,6 +111,12 @@ export class UserController {
       .json(new ApiResponse(201, "OK", { id: newUser?.id }));
   }
 
+  /**
+   * Authenticates an existing user via email/password.
+   *
+   * @remarks
+   * Uses a 'Safe-Compare' logic with Bcrypt to prevent timing attacks.
+   */
   async loginUser(req: Request, res: Response) {
     const payload = req.query;
 
@@ -169,6 +192,7 @@ export class UserController {
 
     await connectRedis();
 
+    // Centralized token and session management
     await userRedisService.hashUserLoginInfo(existingUser.id, {
       email: existingUser.email as string,
       role: existingUser.role,

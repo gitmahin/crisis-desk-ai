@@ -19,25 +19,31 @@ import { groq } from "@/lib/ai-models";
 import { asyncToolHandler, mongoConnect } from "@/lib";
 import { MCPToolResponse } from "@/lib/tool-response";
 import { MCPToolException } from "@/lib/exceptions-handlers";
-import { connectRedis, redisClient, reportRedis } from "@/lib/redis";
+import { connectRedis, reportRedis } from "@/lib/redis";
 import {
   CREATE_NEW_REPORT_TOOL_NAME,
   DELETE_REPORT_TOOL_NAME,
   UPDATE_REPORT_TOOL_NAME,
 } from "@repo/constants";
-import {
-  reportModel,
-  type ReportSchemaType,
-  type ReportType,
-} from "@/models/report-model";
-import mongoose, { Schema } from "mongoose";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { reportModel, type ReportType } from "@/models/report-model";
 import { reportEmbedding } from "@/rag";
 
+/**
+ * Registrar for MCP Tools related to Incident Reporting.
+ *
+ * Provides an interface for the AI to create, update, and delete reports.
+ * These tools allow the AI to move from being a "passive observer" to an
+ * "active participant" in crisis management.
+ */
 export class ReportTools extends McpRegistrar {
   static CREATE_NEW_REPORT = CREATE_NEW_REPORT_TOOL_NAME;
   static UPDATE_REPORT = UPDATE_REPORT_TOOL_NAME;
   static DELETE_REPORT = DELETE_REPORT_TOOL_NAME;
+
+  /**
+   * Registers the tool for report creation.
+   * Includes AI classification and vector search synchronization.
+   */
   registerCreateReport() {
     this.server.registerTool(
       ReportTools.CREATE_NEW_REPORT,
@@ -56,6 +62,10 @@ export class ReportTools extends McpRegistrar {
     );
   }
 
+  /**
+   * Registers the tool for updating existing reports.
+   * Supports partial updates for any report field.
+   */
   registerUpdateReport() {
     this.server.registerTool(
       ReportTools.UPDATE_REPORT,
@@ -75,6 +85,10 @@ export class ReportTools extends McpRegistrar {
     );
   }
 
+  /**
+   * Registers the tool for report deletion.
+   * Performs a clean-up across PostgreSQL, MongoDB (Vector), and Redis (Cache).
+   */
   registerDeleteReport() {
     this.server.registerTool(
       ReportTools.DELETE_REPORT,
@@ -94,6 +108,9 @@ export class ReportTools extends McpRegistrar {
     );
   }
 
+  /**
+   * Orchestrates the registration of all report-related tools.
+   */
   init() {
     this.registerCreateReport();
     this.registerUpdateReport();
@@ -101,10 +118,23 @@ export class ReportTools extends McpRegistrar {
   }
 }
 
+/**
+ * Logic for creating a new report.
+ *
+ * Process:
+ * 1. AI Classification: Calls Groq/LLM to predict category, urgency, and summary.
+ * 2. SQL Transaction:
+ *    - Upserts the User (based on contact info).
+ *    - Inserts the Report linked to that User.
+ * 3. Vector Sync: Generates embeddings for the new report and stores them in MongoDB.
+ *
+ * @throws {MCPToolException} If AI classification fails or DB write fails.
+ */
 const createReportTool = async (payload: CreateReportPayloadType) => {
   const { contact, description, language, location, name } = payload;
 
   // Sampling is deprecated. So we have to call LLM directly
+  // AI-Powered Data Enrichment
   const { text } = await generateText({
     model: groq("openai/gpt-oss-20b"),
 
@@ -133,6 +163,10 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
     "confidence" | "category" | "suggested_action" | "urgency" | "summary"
   > = convertToValidJson(text);
 
+  /**
+   * Transaction ensures that if the Vector Sync fails, the database entry
+   * remains consistent or rolls back.
+   */
   const [user_result, report_result] = await postgres.transaction(
     async (tx) => {
       const [exists_user] = await tx
@@ -190,6 +224,10 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
   ).toObject();
 };
 
+/**
+ * Logic for updating an existing report.
+ * Uses a dynamic update pattern to only modify fields provided in the payload.
+ */
 const updateReportTool = async (payload: UpdateReportPayloadType) => {
   const data = payload;
 
@@ -231,12 +269,21 @@ const updateReportTool = async (payload: UpdateReportPayloadType) => {
   ).toObject();
 };
 
+/**
+ * Logic for deleting a report.
+ * Performs a "Fan-out" deletion to maintain referential integrity across
+ * different storage engines (SQL, NoSQL, and Cache).
+ */
 const deleteReportTool = async (payload: GetReportByIdPayloadType) => {
   const data = payload;
 
   await mongoConnect();
   await connectRedis();
 
+  /**
+   * Parallel Execution: Deleting from 3 systems simultaneously
+   * to minimize total latency.
+   */
   const [[deletedReport]] = await Promise.all([
     postgres
       .delete(reportsTable)

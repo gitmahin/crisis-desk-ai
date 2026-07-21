@@ -14,9 +14,9 @@ import { z } from "zod/v4";
  * const result = validateWithZod(req.body, CreateUserWithEmailPassZodSchema);
  *
  * if (!result.success) {
- *   console.log(result.error);
+ *   console.error(result.error);
  * } else {
- *   console.log(result.data);
+ *   console.error(result.data);
  * }
  */
 export const validateWithZod = <T>(

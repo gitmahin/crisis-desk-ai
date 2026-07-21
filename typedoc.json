@@ -1,0 +1,17 @@
+{
+  "name": "Crisis Desk AI - Technical Reference",
+  "entryPoints": ["packages/*", "apps/*"],
+  "entryPointStrategy": "packages",
+  "includeVersion": true,
+  "exclude": [
+    "**/node_modules/**",
+    "**/typedoc/**",
+    "**/dist/**",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/temp/**"
+  ],
+  "externalPattern": ["**/node_modules/**"],
+  "excludeExternals": true,
+  "skipErrorChecking": true
+}

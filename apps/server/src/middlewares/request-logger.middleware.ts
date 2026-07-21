@@ -1,6 +1,14 @@
 import { pinoLogger } from "@repo/logger";
 import type { NextFunction, Request, Response } from "express";
 
+/**
+ * Middleware factory that creates a high-performance request logger.
+ *
+ * This logger captures detailed metadata for every HTTP transaction,
+ * including high-resolution response timing and error context.
+ *
+ * @returns {Function} Express middleware function.
+ */
 export const requestLogger = () => {
   const logger = pinoLogger.createLogger();
 
