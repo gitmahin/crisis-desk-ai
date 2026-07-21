@@ -1,135 +1,154 @@
 name: Deploy Distributed Applications
 
 on:
-    workflow_dispatch:
-        inputs:
-            release:
-                type: choice
-                description: Choose a release version type
-                options:
-                    - latest
-                    - custom
-                required: true
-            environment:
-                type: choice
-                description: Choose deployment environment
-                options:
-                    - development
-                    - production
+  workflow_dispatch:
+    inputs:
+      release:
+        type: choice
+        description: Choose a release version type
+        options:
+          - latest
+          - custom
+        required: true
+      environment:
+        type: choice
+        description: Choose deployment environment
+        options:
+          - development
+          - production
 env:
-    TARGET_BRANCH: ${{ github.ref_name }}
-    AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
-    AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+  TARGET_BRANCH: ${{ github.ref_name }}
+  AWS_ACCESS_KEY_ID: ${{secrets.AWS_ACCESS_KEY_ID}}
+  AWS_SECRET_ACCESS_KEY: ${{secrets.AWS_SECRET_ACCESS_KEY}}
 
-    DOCKER_ACCESS_TOKEN: ${{secrets.DOCKER_ACCESS_TOKEN}}
-    DOCKER_USERNAME: ${{vars.DOCKER_USERNAME}}
+  DOCKER_ACCESS_TOKEN: ${{secrets.DOCKER_ACCESS_TOKEN}}
+  DOCKER_USERNAME: ${{vars.DOCKER_USERNAME}}
 
-    MCP_IMAGE_PORT: 5000
-    MCP_IMAGE_HOST: 0.0.0.0
-    MCP_BASE_URL: ${{vars.MCP_BASE_URL}}
+  MCP_IMAGE_PORT: 5000
+  MCP_IMAGE_HOST: 0.0.0.0
+  MCP_BASE_URL: ${{vars.MCP_BASE_URL}}
 
-    SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+  SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
 
 jobs:
-    base-setup:
-        name: Base Setup For MCP Server docker build
-        environment: Production
-        runs-on: ubuntu-latest
-        outputs:
-            image_tag: ${{ steps.build-release-tag.outputs.IMAGE_TAG }}
-            mcp_app_name: ${{ steps.build-release-tag.outputs.MCP_APP_NAME }}
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
-            - name: Build Release Tag
-              id: build-release-tag
-              run: |
-                  APP_NAME=$(node -p "require('./apps/mcp/package.json').name")
-                  VERSION=$(node -p "require('./package.json').version")
-                  DEPL_ENV=$([ "${{github.event.inputs.environment}}" = "production" ] && echo "" || echo "-dev")
-                  echo "version=$VERSION" >> $GITHUB_OUTPUT
-                  echo "MCP_APP_NAME=$APP_NAME-crisis-desk-ai" >> $GITHUB_OUTPUT
+  base-setup:
+    name: Base Setup For MCP Server docker build
+    environment: Production
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.build-release-tag.outputs.IMAGE_TAG }}
+      mcp_app_name: ${{ steps.build-release-tag.outputs.MCP_APP_NAME }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Build Release Tag
+        id: build-release-tag
+        run: |
+          APP_NAME=$(node -p "require('./apps/mcp/package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          DEPL_ENV=$([ "${{github.event.inputs.environment}}" = "production" ] && echo "" || echo "-dev")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "MCP_APP_NAME=$APP_NAME-crisis-desk-ai" >> $GITHUB_OUTPUT
 
-                  if [[ "${{ env.TARGET_BRANCH }}" == "main" && "${{ github.event.inputs.release }}" == "latest" ]]; then
-                      echo "IMAGE_TAG=latest$DEPL_ENV" >> $GITHUB_OUTPUT
-                  elif [[ "${{ env.TARGET_BRANCH }}" -ne "main" && "${{ github.event.inputs.release }}" == "latest" ]]; then
-                      echo "Switch to main branch to deploy latest version"
-                      exit 1
-                  elif [[ -n "$VERSION" && "${{ github.event.inputs.release }}" == "custom" ]]; then
-                      echo "Package version = $VERSION"
-                      echo "IMAGE_TAG=v$VERSION$DEPL_ENV" >> $GITHUB_OUTPUT
-                  else
-                      echo "Please choose release type to deploy!"
-                  fi
+          if [[ "${{ env.TARGET_BRANCH }}" == "main" && "${{ github.event.inputs.release }}" == "latest" ]]; then
+              echo "IMAGE_TAG=latest$DEPL_ENV" >> $GITHUB_OUTPUT
+          elif [[ "${{ env.TARGET_BRANCH }}" -ne "main" && "${{ github.event.inputs.release }}" == "latest" ]]; then
+              echo "Switch to main branch to deploy latest version"
+              exit 1
+          elif [[ -n "$VERSION" && "${{ github.event.inputs.release }}" == "custom" ]]; then
+              echo "Package version = $VERSION"
+              echo "IMAGE_TAG=v$VERSION$DEPL_ENV" >> $GITHUB_OUTPUT
+          else
+              echo "Please choose release type to deploy!"
+          fi
 
-    build-push-mcp:
-        name: Build docker image and push to aws public repository
-        environment: Production
-        needs: base-setup
-        runs-on: ubuntu-latest
+  build-push-mcp:
+    name: Build docker image and push to aws public repository
+    environment: Production
+    needs: base-setup
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ needs.base-setup.outputs.image_tag }}
+      MCP_APP_NAME: ${{ needs.base-setup.outputs.mcp_app_name }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_ACCESS_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./apps/mcp/Dockerfile
+          push: true
+          secret-envs: |
+            MCP_IMAGE_HOST=${{env.MCP_IMAGE_HOST}}
+            MCP_IMAGE_PORT=${{env.MCP_IMAGE_PORT}}
+
+          tags: ${{env.DOCKER_USERNAME}}/${{ env.MCP_APP_NAME }}:${{env.IMAGE_TAG}}
+
+  package-deploy-serverless:
+    name: Package serverless project and deploy to AWS Lambda
+    environment: Production
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [24.x]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Swap Serverless Config File
+        id: swap-serverless-config-file
+        run: |
+          cp apps/server/serverless.prod.yml apps/server/serverless.yml
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install Serverless
+        run: npm install -g serverless
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Install packages
+        run: pnpm install
+      - name: Login to serverless
+        working-directory: apps/server
         env:
-            IMAGE_TAG: ${{ needs.base-setup.outputs.image_tag }}
-            MCP_APP_NAME: ${{ needs.base-setup.outputs.mcp_app_name }}
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
-            - name: Login to Docker Hub
-              uses: docker/login-action@v3
-              with:
-                  username: ${{ env.DOCKER_USERNAME }}
-                  password: ${{ env.DOCKER_ACCESS_TOKEN }}
+          SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
+        run: serverless login
+      - name: Build packages
+        run: pnpm --filter "./packages/**" run build
+      - name: Deploy serverless
+        run: pwd && pnpm --filter server run deploy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
+          MCP_BASE_URL: ${{ENV.MCP_BASE_URL}}
 
-            - name: Set up QEMU
-              uses: docker/setup-qemu-action@v4
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v4
-            - name: Build and push
-              uses: docker/build-push-action@v7
-              with:
-                  context: .
-                  file: ./apps/mcp/Dockerfile
-                  push: true
-                  secret-envs: |
-                      MCP_IMAGE_HOST=${{env.MCP_IMAGE_HOST}}
-                      MCP_IMAGE_PORT=${{env.MCP_IMAGE_PORT}}
-
-                  tags: ${{env.DOCKER_USERNAME}}/${{ env.MCP_APP_NAME }}:${{env.IMAGE_TAG}}
-
-    package-deploy-serverless:
-        name: Package serverless project and deploy to AWS Lambda
-        environment: Production
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                node-version: [24.x]
-        steps:
-            - name: Checkout Repository
-              uses: actions/checkout@v4
-            - name: Swap Serverless Config File
-              id: swap-serverless-config-file
-              run: |
-                  cp apps/server/serverless.prod.yml apps/server/serverless.yml
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v3
-              with:
-                  node-version: ${{ matrix.node-version }}
-            - name: Install Serverless
-              run: npm install -g serverless
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-            - name: Install packages
-              run: pnpm install
-            - name: Login to serverless
-              working-directory: apps/server
-              env:
-                SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
-              run: serverless login
-            - name: Build packages
-              run: pnpm --filter "./packages/**" run build
-            - name: Deploy serverless
-              run: pwd && pnpm --filter server run deploy
-              env:
-                  AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-                  AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
-                  SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
-                  MCP_BASE_URL: ${{ENV.MCP_BASE_URL}}
+  publish-tech-reference:
+    name: "Crisis Desk AI - Technical Reference"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Install packages
+        run: pnpm install
+      - name: Build static files
+        run: pnpm gen:docs-all
+      - name: Upload static files as artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: typedocs/
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

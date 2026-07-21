@@ -13,7 +13,7 @@
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "gen:docs": "typedoc",
-    "gen:docs-all": "npm run docs --workspaces --if-present",
+    "gen:docs-all": "pnpm --if-present -r run gen:docs",
     "clean": "turbo run clean && rm -rf node_modules dist .turbo && echo 'Root Cleanup complete!'"
   },
   "devDependencies": {

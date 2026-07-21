@@ -23,14 +23,20 @@ export interface IReportsRedis {
   clearReportsAllCache(): Promise<unknown>;
 }
 
+/**
+ * Redis Service implementation for Report Caching and Analytics Protection.
+ * 
+ * Implements an "Anti-Stampede" and "Adaptive TTL" strategy to ensure high 
+ * availability during crisis events.
+ */
 export class ReportsRedis implements IReportsRedis {
-  // cache keys
+  // Cache Key Prefixes
   static REPORT_ANALYTICS_KEY: string = "analytics:";
   static REPORTS_COUNT_CACHE_KEY = "reports_count";
   static REPORTS_CACHE_KEY = "reports:";
   static SINGLE_REPORTS_CACHE_KEY = "reports:id:";
 
-  // static constants
+  // Expiration Constants (Seconds)
   static REPORT_ANALYTICS_EXPIRY: number = 30;
   static REPORT_INVALID_BULK_REQUEST_EXPIRY: number = 5 * 60;
   static SINGLE_REPORT_EXPIRY = 30;
@@ -40,6 +46,10 @@ export class ReportsRedis implements IReportsRedis {
     this.redisClient = client;
   }
 
+  /**
+   * Caches multiple reports using an atomic multi-set operation.
+   * Each report is stored in a granular key to allow for future specific invalidation.
+   */
   async cacheNReports(
     data: any[],
     page: number,
@@ -57,6 +67,13 @@ export class ReportsRedis implements IReportsRedis {
     return await multi.exec();
   }
 
+  /**
+ * Retrieves paginated reports using MGET (Multiple Get).
+ * 
+ * @remarks
+ * This is a high-performance operation as it fetches all items 
+ * in a single network round-trip.
+ */
   async getNReports(page: number) {
     const reports_count = await this.redisClient.get(
       ReportsRedis.REPORTS_COUNT_CACHE_KEY
@@ -69,6 +86,16 @@ export class ReportsRedis implements IReportsRedis {
     return await this.redisClient.mGet(cache_keys);
   }
 
+  /**
+ * Retrieves cached analytics with Adaptive Throttling logic.
+ * 
+ * @logic
+ * If a user requests analytics more than three time within the base TTL (30s), 
+ * the system detects "Excessive Polling" and extends the cache life 
+ * to 5 minutes to protect the primary database.
+ * 
+ * @returns [parsedData, statusMessage]
+ */
   async cacheReportAnalytics(key: string, data: any) {
     // cache for 10s
     const analytics_report_key = ReportsRedis.REPORT_ANALYTICS_KEY + key;
@@ -158,10 +185,17 @@ export class ReportsRedis implements IReportsRedis {
     );
   }
 
+  /**
+ * Deletes a specific report from the cache.
+ * Correctly applies the internal prefix.
+ */
   async deleteSingleReportCache(key: string): Promise<unknown> {
     return await this.redisClient.del(key);
   }
 
+  /**
+ * Flushes the main report-related keys.
+ */
   async clearReportsAllCache(): Promise<unknown> {
     await this.redisClient.del([
       ReportsRedis.REPORTS_CACHE_KEY,

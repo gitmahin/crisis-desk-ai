@@ -11,6 +11,15 @@ import {
 import { generateText, jsonSchema, type ToolSet } from "ai";
 import type { NextFunction, Request, Response } from "express";
 
+/**
+ * Middleware that attaches an AI Agent to the request flow.
+ * 
+ * This is a "Dynamic Orchestrator":
+ * 1. It lists all available tools from the MCP Server.
+ * 2. It wraps these tools into an 'AI SDK' compatible format.
+ * 3. It provides the LLM with the context of any previously fetched MCP Resource.
+ * 4. The LLM then decides which tools to call to satisfy the user's prompt.
+ */
 export const attachAgent = async (
   req: Request,
   res: Response,
@@ -23,10 +32,9 @@ export const attachAgent = async (
   const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string; // value = model_name
 
   // console.log("here is mahin agent: ", use_agent);
-  const prompt =
-    `Here is the necessary resource: ${JSON.stringify(req.resourceResult)}.
-  Now do the task given in the prompt.
-  ` + payload.prompt || null;
+
+  // Combine Resource Data (Context) with the User's Prompt
+  const prompt = `Context: ${JSON.stringify(req.resourceResult)}. \n Task: ${payload.prompt}`;
 
   const { tools } = await mcpClient.listTools();
 
@@ -66,13 +74,13 @@ export const attachAgent = async (
 
     if (toolResult?.isError) {
       const error = toolResult._meta?.error;
-     
+
       throw new ApiError(
         400,
-         // @ts-ignore
+        // @ts-ignore
         { title: "", message: error.message, code: error.code },
         "",
-         // @ts-ignore
+        // @ts-ignore
         [SystemCustomErrorMsgByCode[error.code]]
       );
     }
@@ -94,6 +102,13 @@ export const attachAgent = async (
   throw new ApiError(400, getSystemCustomErrorMsgByKey("INVALID_AGENT_CALL")!);
 };
 
+/**
+ * Middleware that executes an MCP Tool based on injected payload parameters.
+ * 
+ * @remarks
+ * Handles MCP-level errors by mapping them to standard {@link ApiError} instances.
+ * Success results are returned directly to the client as a JSON response.
+ */
 export const useMCPTool = async (
   req: Request,
   res: Response,
@@ -130,7 +145,7 @@ export const useMCPTool = async (
     .json(
       new ApiResponse(
         status,
-         // @ts-ignore
+        // @ts-ignore
         toolResult.content[0].text,
         toolResult.structuredContent
       )

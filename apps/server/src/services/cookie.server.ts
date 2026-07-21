@@ -28,7 +28,7 @@ type CookieType = {
 export class CookieService {
   /**
    * Configuration for the Refresh Token cookie.
-   * Valid for 7 days.
+   * Valid for 30 days.
    */
   static REFRESH_TOKEN: CookieType = {
     name: "refreshToken",
@@ -43,7 +43,7 @@ export class CookieService {
 
   /**
    * Configuration for the Access Token cookie.
-   * Valid for 15 minutes.
+   * Valid for 5 minutes.
    */
   static ACCESS_TOKEN: CookieType = {
     name: "accessToken",
