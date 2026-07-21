@@ -1,3 +1,7 @@
+# ==============================================================================
+# SECRETS MANAGEMENT (AWS SSM Parameter Store)
+# ==============================================================================
+
 resource "aws_ssm_parameter" "database_url" {
   name  = "/crsai/prod/database_url"
   type  = "SecureString"

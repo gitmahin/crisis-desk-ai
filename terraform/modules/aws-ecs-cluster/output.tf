@@ -1,3 +1,8 @@
+# ==============================================================================
+# CLUSTER OUTPUTS
+# Exporting details cross-module referencing.
+# ==============================================================================
+
 output "ecs_cluster_id_output" {
   type = string
   value = aws_ecs_cluster.crisis_cluster.id
