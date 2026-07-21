@@ -122,11 +122,11 @@ export const CustomDrizzleErrorMessage: DrizzleErrorType = {
 
 /**
  * Normalizes complex Drizzle/Database errors into a human-readable format.
- * 
- * Drizzle often wraps driver-level errors (like Postgres errors) inside 
- * a 'cause' property. This function unwraps that hierarchy to find the 
+ *
+ * Drizzle often wraps driver-level errors (like Postgres errors) inside
+ * a 'cause' property. This function unwraps that hierarchy to find the
  * root database code.
- * 
+ *
  * @param error - The caught exception from a Drizzle query.
  * @returns {DrizzleErrorInfo | null} - Standardized error info or null if not a DB error.
  */
@@ -154,7 +154,7 @@ export const getFromattedDrizzleError = (
 };
 
 /**
- * A custom exception class for manually throwing database-related 
+ * A custom exception class for manually throwing database-related
  * business logic errors (e.g., 'Invalid Row State').
  */
 export class CustomDbError extends DatabaseError {

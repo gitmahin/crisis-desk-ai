@@ -16,7 +16,7 @@
     "gen:docs-all": "pnpm --if-present -r run gen:docs",
     "clean": "turbo run clean && rm -rf node_modules dist .turbo && echo 'Root Cleanup complete!'",
     "prepare": "husky",
-    "commit": "git-cz"
+    "commit": "cz"
   },
   "config": {
     "commitizen": {
@@ -37,10 +37,10 @@
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
     "@types/request-ip": "^0.0.41",
+    "commitizen": "^4.3.2",
     "commitlint-plugin-tense": "^1.0.10",
     "conventional-changelog-conventionalcommits": "^10.2.1",
     "drizzle-kit": "^0.31.10",
-    "git-cz": "^4.9.0",
     "husky": "^9.1.7",
     "inquirer": "^14.0.2",
     "prettier": "^3.7.4",

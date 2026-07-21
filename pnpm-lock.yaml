@@ -111,6 +111,9 @@ importers:
       '@types/request-ip':
         specifier: ^0.0.41
         version: 0.0.41
+      commitizen:
+        specifier: ^4.3.2
+        version: 4.3.2(@types/node@26.1.1)(typescript@5.9.2)
       commitlint-plugin-tense:
         specifier: ^1.0.10
         version: 1.0.10(@commitlint/lint@21.2.0)
@@ -120,9 +123,6 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
-      git-cz:
-        specifier: ^4.9.0
-        version: 4.9.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -3711,10 +3711,6 @@ packages:
   get-tsconfig@5.0.0-beta.5:
     resolution: {integrity: sha512-/6gFNr0N04nob252sTQxyFLi3eKFRqIg1I87YcqAMT1i6SQrSF6KujUEQrtrjMV0H/eejTCltLdDSTEMzHbnsQ==}
     engines: {node: '>=20.20.0'}
-
-  git-cz@4.9.0:
-    resolution: {integrity: sha512-cSRL8IIOXU7UFLdbziCYqg8f8InwLwqHezkiRHNSph7oZqGv0togId1kMTfKil6gzK0VaSXeVBb4oDl0fQCHiw==}
-    hasBin: true
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -9397,8 +9393,6 @@ snapshots:
   get-tsconfig@5.0.0-beta.5:
     dependencies:
       resolve-pkg-maps: 1.0.0
-
-  git-cz@4.9.0: {}
 
   glob-parent@5.1.2:
     dependencies:

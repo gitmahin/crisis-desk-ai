@@ -47,20 +47,19 @@ interface IReportToolPaylodInjectorMiddleware {
 
 /**
  * Middleware responsible for preparing data for MCP Tool execution.
- * 
- * This class validates incoming JSON payloads and attaches the validated 
+ *
+ * This class validates incoming JSON payloads and attaches the validated
  * data to the request object for the downstream MCP client.
  */
 export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInjectorMiddleware {
-
   /**
    * Prepares the payload for creating a new report.
-   * 
+   *
    * @remarks
    * Includes a **Semantic Deduplication Guard**:
-   * It uses previously fetched "similar reports" (from req.resourceResult) and 
+   * It uses previously fetched "similar reports" (from req.resourceResult) and
    * asks an LLM to determine if the new report is a duplicate of an existing one.
-   * 
+   *
    * @throws {ApiError} 400 if validation fails or a duplicate is found.
    */
   async injectCreateReportPayload(
@@ -122,7 +121,7 @@ export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInje
     return next();
   }
 
-    /**
+  /**
    * Maps a URL ID parameter to the 'delete' tool argument.
    */
   async injectDeleteReportPayload(
@@ -155,7 +154,7 @@ export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInje
     return next();
   }
 
-    /**
+  /**
    * Merges URL ID and Body data for the 'update' tool.
    */
   async injectUpdateReportPayload(
@@ -218,8 +217,7 @@ interface IReportRsrcPayloadInjectorMiddleware {
  * Middleware responsible for constructing MCP Resource URIs.
  */
 export class ReportRsrcPayloadInjectorMiddleware implements IReportRsrcPayloadInjectorMiddleware {
-  
-    /**
+  /**
    * Generates a URI for semantic similarity search based on the report body.
    */
   async injectFindDuplicateResource(
@@ -228,12 +226,12 @@ export class ReportRsrcPayloadInjectorMiddleware implements IReportRsrcPayloadIn
     next: NextFunction
   ) {
     const payload = req.body;
-      // Encoding the payload into the URI for the MCP similarity tool
+    // Encoding the payload into the URI for the MCP similarity tool
     req.resourceUri = `reports://similar/${encodeURIComponent(JSON.stringify(payload))}/`;
     return next();
   }
 
-    /**
+  /**
    * Transforms query filters into a MCP Resource URI.
    */
   async injectGetAllReportsPayload(
@@ -269,7 +267,7 @@ export class ReportRsrcPayloadInjectorMiddleware implements IReportRsrcPayloadIn
     return next();
   }
 
-   /**
+  /**
    * Constructs a specific resource URI for a report by its ID.
    */
   async injectGetReportByIdPayload(
@@ -302,11 +300,11 @@ export class ReportRsrcPayloadInjectorMiddleware implements IReportRsrcPayloadIn
     return next();
   }
 
-    /**
+  /**
    * Handles the analytics payload with a "Short-Circuit" cache logic.
-   * 
+   *
    * @remarks
-   * If analytics for the client IP are in Redis, it returns the response 
+   * If analytics for the client IP are in Redis, it returns the response
    * immediately, skipping the MCP call entirely.
    */
   async injectGetAnalylticsPayload(

@@ -6,11 +6,11 @@ import {
 
 /**
  * A standardized exception class for all API-related failures.
- * 
- * This class extends the native `Error` to include HTTP status codes, 
- * machine-readable error codes, and an array of specific error details 
+ *
+ * This class extends the native `Error` to include HTTP status codes,
+ * machine-readable error codes, and an array of specific error details
  * (e.g., validation failures).
- * 
+ *
  * @example
  * throw new ApiError(400, SystemCustomErrorMsgByCode.INVALID_INPUT, undefined, ["Email is required"]);
  */

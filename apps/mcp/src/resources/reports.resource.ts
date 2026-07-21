@@ -9,7 +9,7 @@ import {
   type ReadResourceCallback,
   type ReadResourceTemplateCallback,
 } from "@modelcontextprotocol/server";
-import {  reportRedis } from "@/lib/redis";
+import { reportRedis } from "@/lib/redis";
 import { connectRedis } from "@/lib/redis";
 import { MCPResourceException } from "@/lib/exceptions-handlers";
 import { getPreparedReportStats } from "@/prepared-statements";
@@ -18,14 +18,13 @@ import { reportEmbedding } from "@/rag";
 
 /**
  * Registrar responsible for exposing incident report data to the MCP server.
- * 
- * This class maps specific URIs (Uniform Resource Identifiers) to database 
- * operations, allowing the LLM to query historical reports, analyze stats, 
+ *
+ * This class maps specific URIs (Uniform Resource Identifiers) to database
+ * operations, allowing the LLM to query historical reports, analyze stats,
  * and perform semantic searches for similar incidents.
  */
 export class ReportResources extends McpRegistrar {
-
-    /**
+  /**
    * Registers the 'all-reports' resource.
    * Enables paginated browsing of reports with optional category and urgency filters.
    */
@@ -45,7 +44,7 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
-    /**
+  /**
    * Registers the 'get-report-by-id' resource.
    * Allows the AI to fetch granular details about a specific incident using its unique ID.
    */
@@ -63,7 +62,7 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
-    /**
+  /**
    * Registers the 'get-report-analytics' resource.
    * Provides a high-level summary of system-wide incident statistics.
    */
@@ -81,7 +80,7 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
-    /**
+  /**
    * Registers the 'get-similar-reports' resource.
    * Connects the MCP server to the Vector Search engine for semantic similarity queries.
    */
@@ -99,7 +98,7 @@ export class ReportResources extends McpRegistrar {
     );
   }
 
-   /**
+  /**
    * Initializes all report-related resource routes.
    */
   init() {
@@ -112,7 +111,7 @@ export class ReportResources extends McpRegistrar {
 
 /**
  * Handler for paginated report retrieval.
- * 
+ *
  * Logic Flow:
  * 1. Checks Redis cache for existing results to reduce DB load.
  * 2. If cache miss, queries PostgreSQL via Drizzle with dynamic filters.
@@ -194,11 +193,10 @@ const allReports: ReadResourceTemplateCallback = async (uri, variables) => {
   return new MCPResourceResponse(uri.href, JSON.stringify({})).toObject();
 };
 
-
 /**
  * Handler for fetching a single report by ID.
  * Uses a prepared statement for optimized execution and SQL injection protection.
- * 
+ *
  * @throws {MCPResourceException} 404 if the report ID does not exist.
  */
 const getReportBySpecificId: ReadResourceTemplateCallback = async (

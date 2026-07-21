@@ -1,10 +1,5 @@
-import {
-  createMcpHandler,
-  McpServer,
-} from "@modelcontextprotocol/server";
-import {
-  toNodeHandler,
-} from "@modelcontextprotocol/node";
+import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
+import { toNodeHandler } from "@modelcontextprotocol/node";
 
 import { baseConfig } from "./config";
 import { createServer } from "node:http";
@@ -35,7 +30,6 @@ createServer(async (req, res) => {
     res.end(JSON.stringify({ status: "ok" }));
     return;
   }
-
 
   void nodeHandler(req, res);
 }).listen(baseConfig.PORT, baseConfig.HOST, () => {

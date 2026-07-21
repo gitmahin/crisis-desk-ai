@@ -13,7 +13,7 @@ import type { NextFunction, Request, Response } from "express";
 
 /**
  * Middleware that attaches an AI Agent to the request flow.
- * 
+ *
  * This is a "Dynamic Orchestrator":
  * 1. It lists all available tools from the MCP Server.
  * 2. It wraps these tools into an 'AI SDK' compatible format.
@@ -104,7 +104,7 @@ export const attachAgent = async (
 
 /**
  * Middleware that executes an MCP Tool based on injected payload parameters.
- * 
+ *
  * @remarks
  * Handles MCP-level errors by mapping them to standard {@link ApiError} instances.
  * Success results are returned directly to the client as a JSON response.
@@ -140,14 +140,12 @@ export const useMCPTool = async (
   // @ts-ignore
   const status = Number(toolResult._meta.status) ?? 200;
 
-  return res
-    .status(status)
-    .json(
-      new ApiResponse(
-        status,
-        // @ts-ignore
-        toolResult.content[0].text,
-        toolResult.structuredContent
-      )
-    );
+  return res.status(status).json(
+    new ApiResponse(
+      status,
+      // @ts-ignore
+      toolResult.content[0].text,
+      toolResult.structuredContent
+    )
+  );
 };

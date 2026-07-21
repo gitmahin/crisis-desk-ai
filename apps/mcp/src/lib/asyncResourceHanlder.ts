@@ -10,15 +10,15 @@ type AnyResourceCallback = ReadResourceCallback | ReadResourceTemplateCallback;
 
 /**
  * A Higher-Order Function (HOF) that wraps MCP resource handlers with global error handling.
- * 
- * This wrapper catches both synchronous and asynchronous exceptions, transforming them 
- * into standardized MCP error responses. It ensures the server remains stable and 
+ *
+ * This wrapper catches both synchronous and asynchronous exceptions, transforming them
+ * into standardized MCP error responses. It ensures the server remains stable and
  * provides the AI agent with a protocol-compliant error message.
- * 
+ *
  * @template T - The specific type of the resource callback being wrapped.
  * @param requestHandlerFn - The actual business logic function for the resource.
  * @returns A "protected" version of the handler that manages its own lifecycle and errors.
- * 
+ *
  * @example
  * this.server.registerResource(
  *   "my-resource",

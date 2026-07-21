@@ -4,14 +4,14 @@ import { CustomDrizzleErrorMessage } from "@repo/shared";
 
 /**
  * Exception specifically for errors occurring within MCP Tool execution.
- * 
- * Extends {@link MCPException} to include the name of the tool, 
+ *
+ * Extends {@link MCPException} to include the name of the tool,
  * improving traceability in logs and AI feedback loops.
  */
 export class MCPToolException extends MCPException {
   /**
    * Creates an instance of MCPToolException.
-   * 
+   *
    * @param message - Human-readable error description.
    * @param toolName - The identifier of the tool that failed.
    * @param errorCode - (Optional) Specific error code. Defaults to 'TOOL_ERROR'.
@@ -39,14 +39,14 @@ export class MCPToolException extends MCPException {
 
 /**
  * Exception specifically for errors occurring during MCP Resource retrieval.
- * 
- * Extends {@link MCPException} to include the specific Resource URI 
+ *
+ * Extends {@link MCPException} to include the specific Resource URI
  * that was being accessed.
  */
 export class MCPResourceException extends MCPException {
   /**
    * Creates an instance of MCPResourceException.
-   * 
+   *
    * @param message - Human-readable error description.
    * @param resourceUri - The URI of the resource being requested.
    * @param errorCode - (Optional) Specific error code. Defaults to 'RESOURCE_ERROR'.
@@ -63,9 +63,9 @@ export class MCPResourceException extends MCPException {
   }
 
   /**
-  * Maps the resource exception to a standardized error response 
-  * with an prefixed message for context.
-  */
+   * Maps the resource exception to a standardized error response
+   * with an prefixed message for context.
+   */
   toErrorResponse(): MCPErrorResponse {
     return new MCPErrorResponse(
       this.errorCode,
@@ -77,14 +77,14 @@ export class MCPResourceException extends MCPException {
 }
 
 /**
- * A "Swiss Army Knife" error handler that normalizes unknown exceptions into 
+ * A "Swiss Army Knife" error handler that normalizes unknown exceptions into
  * standardized {@link MCPErrorResponse} objects.
- * 
+ *
  * This function handles:
  * 1. Custom {@link MCPException} instances.
  * 2. Database errors (specifically mapped from Drizzle).
  * 3. Native JS Errors and third-party response errors.
- * 
+ *
  * @param err - The caught error object of unknown type.
  * @returns A formatted MCPErrorResponse ready for the protocol wire.
  */
@@ -95,10 +95,10 @@ export function handleMCPError(err: unknown): MCPErrorResponse {
   }
 
   /**
-  * 2. Error Code Extraction
-  * Attempts to find an error code across various common library patterns 
-  * (AWS, Axios, Drizzle, Node.js system errors).
-  */
+   * 2. Error Code Extraction
+   * Attempts to find an error code across various common library patterns
+   * (AWS, Axios, Drizzle, Node.js system errors).
+   */
   const code =
     (err as any)?.data?.error?.type ??
     (err as any)?.data?.error?.code ??
@@ -121,9 +121,9 @@ export function handleMCPError(err: unknown): MCPErrorResponse {
   }
 
   /**
-  * 4. Message Extraction
-  * Gracefully pulls the most descriptive message available.
-  */
+   * 4. Message Extraction
+   * Gracefully pulls the most descriptive message available.
+   */
   const message =
     (err as any)?.data?.error?.message ??
     (err as any)?.responseBody ??
@@ -131,9 +131,9 @@ export function handleMCPError(err: unknown): MCPErrorResponse {
     String(err);
 
   /**
-* 5. Metadata Enrichment
-* Captures technical details for debugging without crashing the reporter.
-*/
+   * 5. Metadata Enrichment
+   * Captures technical details for debugging without crashing the reporter.
+   */
   const details: Record<string, unknown> = {};
   if (err && typeof err === "object") {
     if ("statusCode" in err) details.statusCode = (err as any).statusCode;

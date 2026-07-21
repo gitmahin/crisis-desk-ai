@@ -21,7 +21,6 @@ const Configuration: UserConfig = {
     {
       rules: {
         "check-breaking-change": ({ subject, body, footer, type, header }) => {
-
           const has_break_word_footer = hasBreakingWord(footer || "");
           const has_break_word_subject = hasBreakingWord(subject || "");
           const has_break_word_body = hasBreakingWord(body || "");

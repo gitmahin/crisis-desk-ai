@@ -2,8 +2,8 @@ import { type ApiResponseType } from "@repo/types";
 
 /**
  * A standardized wrapper for all successful API responses.
- * 
- * This class ensures that the frontend receives a predictable object 
+ *
+ * This class ensures that the frontend receives a predictable object
  * structure, making it easier to write global response interceptors.
  */
 export class ApiResponse implements ApiResponseType {

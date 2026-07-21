@@ -4,8 +4,8 @@ import { createRedisClient, ReportsRedis } from "@repo/shared";
 
 /**
  * The primary Redis client instance for the application.
- * 
- * Initialized using credentials provided by {@link RedisConfig}. This client 
+ *
+ * Initialized using credentials provided by {@link RedisConfig}. This client
  * acts as the low-level transport for all Redis-based operations.
  */
 export const redisClient: RedisClientType = createRedisClient(
@@ -21,8 +21,8 @@ redisClient.on("error", (err: unknown) =>
 
 /**
  * Reconnection event listener.
- * 
- * Triggered when the client loses its connection to the Redis server 
+ *
+ * Triggered when the client loses its connection to the Redis server
  * and attempts to re-establish the link.
  */
 redisClient.on("reconnecting", () =>
@@ -33,14 +33,14 @@ redisClient.on("reconnecting", () =>
 
 /**
  * Establishes a connection to the Redis server.
- * 
- * This function is idempotent: it checks the current connection state 
+ *
+ * This function is idempotent: it checks the current connection state
  * using `.isOpen` before attempting a new connection.
- * 
+ *
  * @returns {Promise<void>} Resolves when the connection is successfully opened.
- * 
+ *
  * @remarks
- * This should be called during the application's bootstrap phase, 
+ * This should be called during the application's bootstrap phase,
  * typically alongside other database initialization routines.
  */
 export async function connectRedis() {

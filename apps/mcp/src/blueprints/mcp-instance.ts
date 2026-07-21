@@ -6,27 +6,27 @@ interface IMcpInstance {
 
 /**
  * Base class for organizing MCP logic into domain-specific modules.
- * 
- * Subclasses should implement the {@link init} method to define how 
+ *
+ * Subclasses should implement the {@link init} method to define how
  * resources, tools, or prompts are registered.
- * 
+ *
  * @abstract
  */
 export abstract class McpRegistrar implements IMcpInstance {
   protected server: McpServer;
 
   /**
- * Creates an instance of the registrar.
- * @param server - The target MCP server where components will be registered.
- */
+   * Creates an instance of the registrar.
+   * @param server - The target MCP server where components will be registered.
+   */
   constructor(server: McpServer) {
     this.server = server;
   }
 
   /**
- * Entry point for registration logic.
- * Must be implemented by the specific domain class.
- * @abstract
- */
+   * Entry point for registration logic.
+   * Must be implemented by the specific domain class.
+   * @abstract
+   */
   abstract init(): void;
 }

@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
-        "gen:docs": "typedoc",
+    "gen:docs": "typedoc",
     "check:lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ --max-warnings 1000",
     "fix:lint": "eslint . --cache --cache-location node_modules/.cache/eslint/ --fix --max-warnings=1000",
     "check:types": "tsc --noEmit --listFiles",

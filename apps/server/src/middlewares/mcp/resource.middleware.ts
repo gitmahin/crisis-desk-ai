@@ -9,7 +9,7 @@ import type { NextFunction, Request, Response } from "express";
 
 /**
  * Middleware that reads an MCP Resource and attaches the result to the Request object.
- * 
+ *
  * @remarks
  * This allows downstream controllers to access MCP data via `req.resourceResult`.
  * It automatically handles JSON parsing of the resource text content.

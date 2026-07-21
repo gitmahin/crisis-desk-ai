@@ -2,19 +2,19 @@ import { createClient, type RedisClientType } from "redis";
 
 /**
  * Factory function to initialize a high-performance Redis client.
- * 
+ *
  * @param username - Redis ACL username.
  * @param password - Redis ACL password.
  * @param host - Redis server hostname or IP.
  * @param port - Redis server port.
- * 
+ *
  * @returns {RedisClientType} A configured Redis client instance.
- * 
+ *
  * @remarks
  * **Key Architectural Decisions:**
- * 1. `disableOfflineQueue`: Set to true to prevent memory bloat and stale command execution 
+ * 1. `disableOfflineQueue`: Set to true to prevent memory bloat and stale command execution
  *    if the connection drops. We prefer "fail-fast" behavior in crisis scenarios.
- * 2. `reconnectStrategy`: Implements exponential backoff with random jitter to prevent 
+ * 2. `reconnectStrategy`: Implements exponential backoff with random jitter to prevent
  *    synchronized reconnection attempts (Thundering Herd).
  */
 export const createRedisClient = (

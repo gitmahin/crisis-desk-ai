@@ -17,13 +17,13 @@ import jwt from "jsonwebtoken";
 
 /**
  * Middleware to enforce authentication and manage token rotation.
- * 
+ *
  * Logic Flow:
  * 1. Attempt to verify the Access Token for immediate authentication (High performance).
  * 2. If Access Token is expired/invalid, attempt to verify the Refresh Token.
  * 3. Validate user status and 'ADMIN' role via Redis (Cache) or PostgreSQL (Prepared Statement).
  * 4. Perform a 'Silent Refresh' by issuing a new Access Token if the Refresh Token is valid.
- * 
+ *
  * @throws {ApiError} 401 Unauthorized if both tokens are invalid or user lacks Admin permissions.
  */
 export const AuthMiddlware = async (
@@ -39,9 +39,9 @@ export const AuthMiddlware = async (
     // console.log("cookies are: ", incomingAccessToken, incomingRefreshToken);
 
     /**
- * Strategy 1: Fast-Path (Access Token)
- * If a valid Access Token exists, we trust the signed payload to avoid DB/Redis latency.
- */
+     * Strategy 1: Fast-Path (Access Token)
+     * If a valid Access Token exists, we trust the signed payload to avoid DB/Redis latency.
+     */
     if (incomingAccessToken) {
       try {
         const decode_access_token = (await jwt.verify(
@@ -65,9 +65,9 @@ export const AuthMiddlware = async (
     }
 
     /**
- * Strategy 2: Silent Refresh (Refresh Token)
- * If we reach here, the Access Token is missing or invalid.
- */
+     * Strategy 2: Silent Refresh (Refresh Token)
+     * If we reach here, the Access Token is missing or invalid.
+     */
     if (!incomingRefreshToken) {
       throw new ApiError(401, getSystemCustomErrorMsgByKey("UNAUTHORIZED")!);
     }
@@ -83,10 +83,10 @@ export const AuthMiddlware = async (
     }
 
     /**
- * User Validation Layer
- * To ensure the user hasn't been banned or had their role changed, 
- * we verify identity against our storage layers.
- */
+     * User Validation Layer
+     * To ensure the user hasn't been banned or had their role changed,
+     * we verify identity against our storage layers.
+     */
     type TempUserType = Pick<PgUserSelectType, "id" | "email" | "role">;
     let temp_user: TempUserType;
 
@@ -132,9 +132,9 @@ export const AuthMiddlware = async (
     }
 
     /**
- * Token Rotation
- * Generate a new short-lived Access Token and update the client's cookie.
- */
+     * Token Rotation
+     * Generate a new short-lived Access Token and update the client's cookie.
+     */
     const accessToken = jwt.sign(
       { id: temp_user.id, email: temp_user.email, role: temp_user.role },
       AuthConfig.JWT_ACCESS_TOKEN,
