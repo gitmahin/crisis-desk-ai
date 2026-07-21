@@ -79,5 +79,5 @@ variable "prefix" {
 
 variable "aws_ssm_arn" {
   type = string
-  default = "arn:aws:ssm:ap-south-1:565718662061:parameter"
+  default = "arn:aws:ssm:ap-south-1:565718662061:parameter/crsai/prod"
 }

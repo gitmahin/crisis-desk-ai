@@ -124,6 +124,8 @@ jobs:
               env:
                 SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
               run: serverless login
+            - name: Build packages
+              run: pnpm --filter "./packages/**" run build
             - name: Deploy serverless
               run: pwd && pnpm --filter server run deploy
               env:
