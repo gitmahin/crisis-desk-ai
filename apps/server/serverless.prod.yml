@@ -23,7 +23,7 @@ provider:
   # domain: api.example.com
   iam:
     role:
-      name: serverless-crsdskai-ssm-role
+      name: serverless-crsdskai-ssm-role-prod
       statements:
         - Effect: 'Allow'
           Resource: '*'
@@ -53,4 +53,11 @@ custom:
     bundle: true
     minify: true
     sourcemap: true
+    format: 'esm'
+    outputFileExtension: '.mjs' 
     exclude: ['aws-sdk']
+    platform: 'node'
+    banner:
+      js: |
+        import { createRequire as topLevelCreateRequire } from 'module';
+        const require = topLevelCreateRequire(import.meta.url);

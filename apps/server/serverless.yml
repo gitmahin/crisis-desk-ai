@@ -6,6 +6,9 @@ app: crisis-desk-ai
 service: serverless
 useDotenv: true
 
+build:
+  esbuild: false # keep esbuild false. we have to use serverless-esbuild for monorepo structure
+
 provider:
   name: aws
   runtime: nodejs24.x
@@ -19,8 +22,6 @@ provider:
     GROQ_AI_API_KEY: ${env:GROQ_AI_API_KEY}
     JWT_ACCESS_TOKEN_SECRET: ${env:JWT_ACCESS_TOKEN_SECRET}
     JWT_REFRESH_TOKEN_SECRET: ${env:JWT_REFRESH_TOKEN_SECRET}
-    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
-    AWS_SECRET_ACCESS_KEY : ${env:AWS_SECRET_ACCESS_KEY}
     MCP_BASE_URL: ${env:MCP_BASE_URL}
   apiGateway:
     shouldStartNameWithService: true
@@ -30,7 +31,7 @@ provider:
 
   iam:
     role:
-      name: serverless-crsdskai-ssm-role
+      name: serverless-crsdskai-ssm-role-dev
       statements:
         - Effect: 'Allow'
           Resource: '*'
@@ -48,6 +49,7 @@ functions:
       - httpApi: "*"
 
 plugins:
+  - serverless-esbuild
   - serverless-offline
 
 custom:
@@ -59,3 +61,15 @@ custom:
       - JWT_REFRESH_TOKEN_SECRET
       - GROQ_AI_API_KEY
       - DATABASE_URL
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: true
+    format: 'esm'
+    outputFileExtension: '.mjs' 
+    exclude: ['aws-sdk']
+    platform: 'node'
+    banner:
+      js: |
+        import { createRequire as topLevelCreateRequire } from 'module';
+        const require = topLevelCreateRequire(import.meta.url);
