@@ -1,6 +1,13 @@
 name: Crsis AI
 
 services:
+  swagger-ui:
+    build:
+      context: .
+      dockerfile: ./oas/Dockerfile
+    container_name: crsdeskai-swagger
+    ports:
+      - "8005:8080"
   postgres:
     image: postgres:latest
     container_name: crsai-postgres

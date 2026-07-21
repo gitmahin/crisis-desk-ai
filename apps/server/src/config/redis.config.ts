@@ -1,5 +1,4 @@
 import { getSmmValue } from "@repo/shared";
-
 import type { RedisConfigType } from "@repo/types";
 
 export const RedisConfig: RedisConfigType = {

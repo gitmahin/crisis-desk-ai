@@ -1,0 +1,921 @@
+openapi: 3.1.0
+
+info:
+  title: Crisis Desk AI
+  summary: AI-powered emergency incident reporting and triage system.
+  description: Backend API for submitting, classifying, and managing emergency incident reports using AI-driven categorization, urgency scoring, and MCP-based tool orchestration.
+  contact:
+    name: Friendly Communication
+    email: nimulmahin@gmail.com
+  license:
+    name: MIT
+    identifier: MIT
+  version: 1.0.1
+
+servers:
+  - url: http://localhost:3000{api_base}{version}
+    name: Development API
+    description: Development server
+    variables:
+      api_base:
+        default: /api
+        description: API Base path
+      version:
+        default: ""
+        enum:
+          - "/v1"
+          - ""
+
+  - url: http://crsdskai-alb-60644015.ap-south-1.elb.amazonaws.com{api_base}{version}
+    name: Production API
+    description: Production server
+    variables:
+      api_base:
+        default: /api
+        description: API Base path
+      version:
+        default: ""
+        enum:
+          - "/v1"
+          - ""
+
+components:
+  securitySchemes:
+    accessToken:
+      type: apiKey
+      in: cookie
+      name: accessToken
+      description: Access token cookie. Expires in 5 minutes.
+    refreshToken:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+      description: Refresh token cookie. Expires in 30 days. Used only on token-refresh endpoint.
+
+  parameters:
+    ReportId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
+  schemas:
+    Error:
+      type: object
+      required: [title, message, code, status, success, errors]
+      properties:
+        title:
+          type: string
+          example: "Invalid Report Details"
+        message:
+          type: string
+          example: "The information provided is incorrect or incomplete. Please check your inputs and try again."
+        code:
+          type: string
+          example: "40001"
+        status:
+          type: integer
+          example: 400
+        success:
+          type: boolean
+          example: false
+        errors:
+          type: array
+          items: {}
+        stack:
+          type: string
+          description: Only present when NODE_ENV=development.
+
+    ApiResponse:
+      type: object
+      required: [status, message, data, success, title]
+      properties:
+        status:
+          type: integer
+        message:
+          type: string
+        data:
+          nullable: true
+        success:
+          type: boolean
+        title:
+          type: string
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        location:
+          type: string
+          example: "Mirpur 10, Dhaka"
+        geo_location:
+          type: string
+          example: "23.8069,90.3687"
+        language:
+          type: string
+          enum: [BN, EN]
+          example: "BN"
+        description:
+          type: string
+          example: "Fire broke out in a 4-story residential building near Mirpur 10 roundabout."
+        category:
+          type: string
+          enum:
+            [
+              MEDICAL,
+              FIRE,
+              ACCIDENT,
+              CRIME,
+              FLOOD,
+              UTILITY,
+              PUBLIC_SERVICE,
+              INFRASTRUCTURE,
+              OTHER,
+            ]
+          example: "FIRE"
+        urgency:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          example: "CRITICAL"
+        summary:
+          type: string
+          example: "Residential fire reported, multiple units affected."
+        suggested_action:
+          type: string
+          example: "Dispatch fire service and evacuate nearby units."
+        confidence:
+          type: number
+          example: 0.92
+        status:
+          type: string
+          enum: [PENDING, IN_REVIEW, ASSIGNED, RESOLVED, REJECTED]
+          example: "PENDING"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-07-15T09:24:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-07-15T09:24:00Z"
+        user:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "b1e6c2a0-1f2d-4a3b-9c5e-7d8f9a0b1c2d"
+            name:
+              type: string
+              example: "Rahim Uddin"
+            contact:
+              type: string
+              example: "+8801711223344"
+            role:
+              type: string
+              enum: [ADMIN, USER]
+              example: "USER"
+
+    CreateReportPayload:
+      type: object
+      description: >-
+        Inferred shape — reportZSchema.createReport not provided;
+        confirm against actual schema.
+      required:
+        [location, geo_location, language, description, category, urgency]
+      properties:
+        location:
+          type: string
+          example: "Mirpur 10, Dhaka"
+        geo_location:
+          type: string
+          example: "23.8069,90.3687"
+        language:
+          type: string
+          enum: [BN, EN]
+          example: "BN"
+        description:
+          type: string
+          example: "Fire broke out in a 4-story residential building near Mirpur 10 roundabout."
+        category:
+          type: string
+          enum:
+            [
+              MEDICAL,
+              FIRE,
+              ACCIDENT,
+              CRIME,
+              FLOOD,
+              UTILITY,
+              PUBLIC_SERVICE,
+              INFRASTRUCTURE,
+              OTHER,
+            ]
+          example: "FIRE"
+        urgency:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          example: "CRITICAL"
+
+    ReportsAnalyticsSummary:
+      type: object
+      properties:
+        totalReports:
+          type: integer
+          example: 128
+        criticalReports:
+          type: integer
+          example: 14
+        pendingReports:
+          type: integer
+          example: 32
+        resolvedReports:
+          type: integer
+          example: 71
+        categoryBreakdown:
+          type: object
+          properties:
+            fire:
+              type: integer
+              example: 20
+            medical:
+              type: integer
+              example: 35
+            flood:
+              type: integer
+              example: 12
+            utility:
+              type: integer
+              example: 18
+        urgencyBreakdown:
+          type: object
+          properties:
+            low:
+              type: integer
+              example: 40
+            medium:
+              type: integer
+              example: 50
+            high:
+              type: integer
+              example: 25
+            critical:
+              type: integer
+              example: 13
+
+  responses:
+    InternalServerError:
+      description: Unexpected server error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Unexpected Error"
+            message: "Something went wrong on our end. Please try again later or contact support if the issue persists."
+            code: "50000"
+            status: 500
+            success: false
+            errors: []
+
+    CreateReportPayloadError:
+      description: Invalid payload for report creation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Invalid Report Details"
+            message: "The information provided is incorrect or incomplete. Please check your inputs and try again."
+            code: "40001"
+            status: 400
+            success: false
+            errors: []
+
+    UpdateReportStatusPayloadError:
+      description: Invalid payload for report status update.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Invalid Status Update"
+            message: "We couldn't update the report status. Please ensure the report ID is correct and the selected status is valid."
+            code: "40002"
+            status: 400
+            success: false
+            errors: []
+
+    GetReportByIdPayloadError:
+      description: Invalid report ID.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Invalid Report ID"
+            message: "The report ID provided is invalid. Please check the identifier and try again."
+            code: "40003"
+            status: 400
+            success: false
+            errors: []
+
+    GetReportByQueryPayloadError:
+      description: Invalid search filters.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Invalid Search Filters"
+            message: "The filters provided (category or urgency) are not recognized. Please check your selection and try again."
+            code: "40004"
+            status: 400
+            success: false
+            errors: []
+
+    ReportNotFound:
+      description: Report not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Report Not Found"
+            message: "No report was found with the provided ID. Please check the identifier and try again."
+            code: "40401"
+            status: 404
+            success: false
+            errors: []
+
+    ResourceNotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Resource Not Found"
+            message: "The requested resource could not be found. Please check the identifier and try again."
+            code: "40402"
+            status: 404
+            success: false
+            errors: []
+
+    DuplicateReportFound:
+      description: Duplicate report conflict.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Duplicate Report Detected"
+            message: "A similar report already exists for this incident. Please review the existing report before submitting a new one."
+            code: "40901"
+            status: 409
+            success: false
+            errors: []
+
+    InvalidUserInput:
+      description: Invalid user input.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Invalid Input"
+            message: "The input provided is invalid. Please review your entries and try again."
+            code: "40005"
+            status: 400
+            success: false
+            errors: []
+
+    InvalidCredentials:
+      description: Invalid login credentials.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Invalid Credentials"
+            message: "The email or password you entered is incorrect."
+            code: "40101"
+            status: 401
+            success: false
+            errors: []
+
+    Unauthorized:
+      description: Missing or expired session.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            title: "Unauthorized"
+            message: "Your session has expired or is invalid. Please log in again."
+            code: "40100"
+            status: 401
+            success: false
+            errors: []
+
+security:
+  - accessToken: []
+
+paths:
+  /agent:
+    post:
+      operationId: useAgent
+      summary: Invoke AI agent with MCP tool access
+      tags: [Agent]
+      parameters:
+        - name: X-Use-Agent
+          in: header
+          required: true
+          schema: { type: string, enum: ["true"] }
+        - name: X-Model-CRN
+          in: header
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt: { type: string }
+      responses:
+        "200":
+          description: Agent response
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiResponse" }
+        "400":
+          $ref: "#/components/responses/InvalidUserInput"
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check endpoint
+      tags: [System]
+      security: []
+      responses:
+        "200":
+          description: Service healthy.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              example:
+                status: 200
+                message: "OK"
+                success: true
+                title: ""
+                data: null
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /user/create:
+    post:
+      operationId: createUser
+      summary: Create a new user
+      tags: [User]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, role]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                role:
+                  type: string
+                  enum: [ADMIN, USER]
+            example:
+              email: "rahim@example.com"
+              password: "StrongPass123!"
+              role: "USER"
+      responses:
+        "201":
+          description: User created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+              example:
+                status: 201
+                message: "OK"
+                success: true
+                title: ""
+                data:
+                  id: "b1e6c2a0-1f2d-4a3b-9c5e-7d8f9a0b1c2d"
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: accessToken and refreshToken cookies.
+        "400":
+          $ref: "#/components/responses/InvalidUserInput"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /user/login:
+    get:
+      operationId: loginUser
+      summary: Log in a user
+      tags: [User]
+      security: []
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          example: "rahim@example.com"
+        - name: password
+          in: query
+          required: true
+          schema:
+            type: string
+            format: password
+          example: "StrongPass123!"
+      responses:
+        "200":
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+              example:
+                status: 200
+                message: "OK"
+                success: true
+                title: ""
+                data:
+                  id: "b1e6c2a0-1f2d-4a3b-9c5e-7d8f9a0b1c2d"
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: accessToken and refreshToken cookies.
+        "400":
+          $ref: "#/components/responses/InvalidUserInput"
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+
+  /reports:
+    get:
+      operationId: getAllReports
+      summary: Get all reports, optionally filtered
+      tags: [Reports]
+      security: []
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              [
+                MEDICAL,
+                FIRE,
+                ACCIDENT,
+                CRIME,
+                FLOOD,
+                UTILITY,
+                PUBLIC_SERVICE,
+                INFRASTRUCTURE,
+                OTHER,
+              ]
+          example: "FIRE"
+        - name: urgency
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [LOW, MEDIUM, HIGH, CRITICAL]
+          example: "CRITICAL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Report"
+              example:
+                status: 200
+                message: "OK"
+                success: true
+                title: ""
+                data:
+                  - id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    location: "Mirpur 10, Dhaka"
+                    geo_location: "23.8069,90.3687"
+                    language: "BN"
+                    description: "Fire broke out in a 4-story residential building near Mirpur 10 roundabout."
+                    category: "FIRE"
+                    urgency: "CRITICAL"
+                    summary: "Residential fire reported, multiple units affected."
+                    suggested_action: "Dispatch fire service and evacuate nearby units."
+                    confidence: 0.92
+                    status: "PENDING"
+                    created_at: "2026-07-15T09:24:00Z"
+                    updated_at: "2026-07-15T09:24:00Z"
+                    user:
+                      id: "b1e6c2a0-1f2d-4a3b-9c5e-7d8f9a0b1c2d"
+                      name: "Rahim Uddin"
+                      contact: "+8801711223344"
+                      role: "USER"
+        "400":
+          $ref: "#/components/responses/GetReportByQueryPayloadError"
+    post:
+      operationId: createReport
+      summary: Create a new report
+      tags: [Reports]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReportPayload"
+            example:
+              location: "Mirpur 10, Dhaka"
+              geo_location: "23.8069,90.3687"
+              language: "BN"
+              description: "Fire broke out in a 4-story residential building near Mirpur 10 roundabout."
+              category: "FIRE"
+              urgency: "CRITICAL"
+      responses:
+        "201":
+          description: Report created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              example:
+                status: 201
+                message: "Report created successfully."
+                success: true
+                title: ""
+                data: null
+        "400":
+          description: Payload error, resource not found, or duplicate report.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                payloadError:
+                  summary: CreateReportPayloadError
+                  value:
+                    title: "Invalid Report Details"
+                    message: "The information provided is incorrect or incomplete. Please check your inputs and try again."
+                    code: "40001"
+                    status: 400
+                    success: false
+                    errors: []
+                resourceNotFound:
+                  summary: ResourceNotFound
+                  value:
+                    title: "Resource Not Found"
+                    message: "The requested resource could not be found. Please check the identifier and try again."
+                    code: "40402"
+                    status: 400
+                    success: false
+                    errors: []
+                duplicateReport:
+                  summary: DuplicateReportFound
+                  value:
+                    title: "Duplicate Report Detected"
+                    message: "A similar report already exists for this incident. Please review the existing report before submitting a new one."
+                    code: "40901"
+                    status: 400
+                    success: false
+                    errors:
+                      - possibleDuplicate: true
+                        matchedReportId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+
+  /reports/{id}:
+    get:
+      operationId: getReportById
+      summary: Get a report by ID
+      tags: [Reports]
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Report"
+              example:
+                status: 200
+                message: "OK"
+                success: true
+                title: ""
+                data:
+                  id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  location: "Mirpur 10, Dhaka"
+                  geo_location: "23.8069,90.3687"
+                  language: "BN"
+                  description: "Fire broke out in a 4-story residential building near Mirpur 10 roundabout."
+                  category: "FIRE"
+                  urgency: "CRITICAL"
+                  summary: "Residential fire reported, multiple units affected."
+                  suggested_action: "Dispatch fire service and evacuate nearby units."
+                  confidence: 0.92
+                  status: "PENDING"
+                  created_at: "2026-07-15T09:24:00Z"
+                  updated_at: "2026-07-15T09:24:00Z"
+                  user:
+                    id: "b1e6c2a0-1f2d-4a3b-9c5e-7d8f9a0b1c2d"
+                    name: "Rahim Uddin"
+                    contact: "+8801711223344"
+                    role: "USER"
+        "400":
+          description: Invalid report ID or report not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                invalidId:
+                  summary: GetReportByIdPayloadError
+                  value:
+                    title: "Invalid Report ID"
+                    message: "The report ID provided is invalid. Please check the identifier and try again."
+                    code: "40003"
+                    status: 400
+                    success: false
+                    errors: []
+                notFound:
+                  summary: ReportNotFound
+                  value:
+                    title: "Report Not Found"
+                    message: "No report was found with the provided ID. Please check the identifier and try again."
+                    code: "40401"
+                    status: 400
+                    success: false
+                    errors: []
+    delete:
+      operationId: deleteReportById
+      summary: Delete a report by ID
+      tags: [Reports]
+      security:
+        - accessToken: []
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      responses:
+        "200":
+          description: Report deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: string
+                        description: Deleted report ID.
+              example:
+                status: 200
+                message: "Report deleted successfully"
+                success: true
+                title: ""
+                data: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        "400":
+          $ref: "#/components/responses/GetReportByIdPayloadError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/ReportNotFound"
+
+  /reports/{id}/status:
+    patch:
+      operationId: updateReportStatus
+      summary: Update a report's status
+      tags: [Reports]
+      security:
+        - accessToken: []
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  description: New status of the report
+                  type: string
+                  enum: [PENDING, IN_REVIEW, ASSIGNED, RESOLVED, REJECTED]
+            example:
+              status: "RESOLVED"
+      responses:
+        "200":
+          description: Report updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse"
+              example:
+                status: 200
+                message: "Report Updated."
+                success: true
+                title: ""
+                data: null
+        "400":
+          $ref: "#/components/responses/UpdateReportStatusPayloadError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/ReportNotFound"
+
+  /reports/stats/summary:
+    get:
+      operationId: getReportsAnalyticsSummary
+      summary: Get aggregate report analytics
+      tags: [Reports]
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ReportsAnalyticsSummary"
+              example:
+                status: 200
+                message: "OK"
+                success: true
+                title: ""
+                data:
+                  totalReports: 128
+                  criticalReports: 14
+                  pendingReports: 32
+                  resolvedReports: 71
+                  categoryBreakdown:
+                    fire: 20
+                    medical: 35
+                    flood: 12
+                    utility: 18
+                  urgencyBreakdown:
+                    low: 40
+                    medium: 50
+                    high: 25
+                    critical: 13
+        "400":
+          $ref: "#/components/responses/ResourceNotFound"
