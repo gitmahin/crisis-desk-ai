@@ -18,7 +18,7 @@ export async function mongoConnect(): Promise<void> {
     connection.isConnected = db.connections[0]?.readyState;
     console.log("Mongodb connected successfully");
   } catch (error) {
-    console.log("Mongodb connection failed");
+    console.log("Mongodb connection failed. 😪");
     console.log(error)
     process.exit(1);
   }
