@@ -34,7 +34,7 @@ Then open [http://localhost:8081](http://localhost:8081).
 ---
 
 > [!WARNING]
-> The live instance uses a **free-tier Voyage AI** key for embeddings. Under rapid or repeated hits, you may occasionally see a `500 Internal Server Error` due to rate limiting — this isn't a bug, just a free-tier limit. Retrying after a short pause usually resolves it.
+> The live instance uses a **free-tier Voyage AI** key for embeddings. Under rapid or repeated hits, report creation may fail with a database error — this happens because the report is only saved if its vector embedding is successfully created (the two are wrapped in a single transaction). This isn't a bug, just a free-tier rate limit. Retrying after a short pause usually resolves it.
 
 ## 📖 API Quick Reference
 
