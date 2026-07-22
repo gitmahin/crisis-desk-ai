@@ -1,5 +1,5 @@
 {
-  "id": "d9f08df5-5fc8-45aa-9d5c-82494a0487df",
+  "id": "3a37d6f4-6c9a-40d9-b7cc-394b9d04b00e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -154,7 +154,7 @@
         },
         "password": {
           "name": "password",
-          "type": "varchar(20)",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
@@ -196,7 +196,7 @@
       "checkConstraints": {
         "password_max_length_check": {
           "name": "password_max_length_check",
-          "value": "length(\"users\".\"password\") <= 20"
+          "value": "length(\"users\".\"password\") <= 255"
         }
       },
       "isRLSEnabled": false

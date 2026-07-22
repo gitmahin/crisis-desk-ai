@@ -25,13 +25,13 @@ CREATE TABLE "users" (
 	"role" "user_role" DEFAULT 'USER' NOT NULL,
 	"name" varchar(255),
 	"email" varchar(255),
-	"password" varchar(20),
+	"password" varchar(255),
 	"contact" varchar(20),
 	"updated_at" timestamp with time zone,
 	"created_at" timestamp with time zone NOT NULL,
 	CONSTRAINT "users_id_unique" UNIQUE("id"),
 	CONSTRAINT "users_email_unique" UNIQUE("email"),
-	CONSTRAINT "password_max_length_check" CHECK (length("users"."password") <= 20)
+	CONSTRAINT "password_max_length_check" CHECK (length("users"."password") <= 255)
 );
 --> statement-breakpoint
 ALTER TABLE "reports" ADD CONSTRAINT "reports_user_users_id_fk" FOREIGN KEY ("user") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
