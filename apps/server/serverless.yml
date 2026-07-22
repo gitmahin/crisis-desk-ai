@@ -12,6 +12,7 @@ provider:
   name: aws
   runtime: nodejs24.x
   region: ap-south-1
+  timeout: 30
 
   environment:
     # pass environment variables during deploying

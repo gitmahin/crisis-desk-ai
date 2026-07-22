@@ -59,6 +59,7 @@ const limiter = rateLimit({
   }),
 });
 
+app.set("trust proxy", true);
 app.use(limiter);
 /* -------------------------------------------------------------------------- */
 /*                                   Routes                                   */
