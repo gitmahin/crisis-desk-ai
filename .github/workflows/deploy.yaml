@@ -123,12 +123,12 @@ jobs:
       - name: Build packages
         run: pnpm --filter "./packages/**" run build
       - name: Deploy serverless
-        run: pwd && pnpm --filter server run deploy
+        run: pnpm --filter server run deploy --stage production
         env:
           AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
           SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
-          MCP_BASE_URL: ${{env.MCP_BASE_URL}}
+          MCP_BASE_URL: ${{ env.MCP_BASE_URL }}
 
   publish-tech-reference:
     name: "Crisis Desk AI - Technical Reference"

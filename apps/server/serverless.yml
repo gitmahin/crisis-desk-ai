@@ -17,7 +17,7 @@ provider:
     # pass environment variables during deploying
     NODE_OPTIONS: --enable-source-maps
     NODE_ENV: production
-    MCP_BASE_URL: { env:MCP_BASE_URL }
+    MCP_BASE_URL: ${env:MCP_BASE_URL}
   apiGateway:
     shouldStartNameWithService: true
   # Uncomment to easily set up a custom domain. Read the docs for more details:
@@ -26,7 +26,7 @@ provider:
 
   iam:
     role:
-      name: serverless-crsdskai-ssm-role-prod
+      name: serverless-crsdskai-ssm-role
       statements:
         - Effect: "Allow"
           Resource: "*"
