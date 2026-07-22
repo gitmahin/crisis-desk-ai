@@ -13,7 +13,11 @@ import {
 import { postgres } from "@/lib/db.connect";
 import { generateText } from "ai";
 import { eq } from "drizzle-orm";
-import { convertToValidJson, SystemCustomErrorCode } from "@repo/shared";
+import {
+  convertToValidJson,
+  getSystemCustomErrorMsgByKey,
+  SystemCustomErrorCode,
+} from "@repo/shared";
 import { McpRegistrar } from "@/blueprints";
 import { groq } from "@/lib/ai-models";
 import { asyncToolHandler, mongoConnect } from "@/lib";
@@ -27,6 +31,11 @@ import {
 } from "@repo/constants";
 import { reportModel, type ReportType } from "@/models/report-model";
 import { reportEmbedding } from "@/rag";
+
+type DuplicateResponseDataType = {
+  possibleDuplicate: boolean;
+  matchedReportId: string;
+};
 
 /**
  * Registrar for MCP Tools related to Incident Reporting.
@@ -131,25 +140,58 @@ export class ReportTools extends McpRegistrar {
  * @throws {MCPToolException} If AI classification fails or DB write fails.
  */
 const createReportTool = async (payload: CreateReportPayloadType) => {
-  const { contact, description, language, location, name } = payload;
+  // dont json.stringify it its already stringyfied
+  const { contact, description, language, location, name, resourceResult } =
+    payload;
 
   // Sampling is deprecated. So we have to call LLM directly
   // AI-Powered Data Enrichment
   const { text } = await generateText({
     model: groq("openai/gpt-oss-20b"),
+    system: `You are a strict JSON-only incident deduplication and classification engine. Never include prose, markdown, or explanations - output raw JSON only.`,
+    prompt: `TASK 1 — Duplicate Check:
+            Compare the new report against existing reports. Flag "possibleDuplicate": true ONLY if it describes the same real-world incident (same/similar location AND same category AND matching event description). Minor differences in wording, contact info, or timestamp do NOT disqualify a match. If reports list is empty, invalid, or you're unsure, default to false.
 
-    prompt: `You are an emergency incident classification AI.
-                            Analyze the incident report below and classify it.
+            Existing reports:
+            ${resourceResult}
 
-                            Input:
-                            - Name: ${name}
-                            - Contact: ${contact}
-                            - Location: ${location}
-                            - Description: ${description}
-                            - Language: ${language}
+            New report:
+            - Name: ${name}
+            - Contact: ${contact}
+            - Location: ${location}
+            - Description: ${description}
+            - Language: ${language}
 
-                            ${REPORT_PREDICTION_PROMPT}`,
+            TASK 2 — Classification (only if not a duplicate):
+            ${REPORT_PREDICTION_PROMPT}
+
+            Return ONLY this exact JSON shape and this task into one object:
+            
+            {
+              "possibleDuplicate": boolean,
+              "matchedReportId": string | null,
+            }
+
+            Rules:
+            - If possibleDuplicate is false, matchedReportId must be null and classification fields must be populated.
+            - Never return prose, markdown, or explanations — JSON only.`,
   });
+
+  const parsed_model_response: DuplicateResponseDataType =
+    convertToValidJson(text);
+  console.log("here it is", parsed_model_response);
+
+  const structured_event = getSystemCustomErrorMsgByKey(
+    "DUPLICATE_REPORT_FOUND"
+  );
+
+  if (parsed_model_response.possibleDuplicate) {
+    return new MCPToolResponse(
+      structured_event?.message as string,
+      parsed_model_response,
+      400
+    ).toObject();
+  }
 
   if (!text) {
     throw new MCPToolException(

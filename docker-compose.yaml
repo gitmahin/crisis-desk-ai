@@ -7,7 +7,23 @@ services:
       dockerfile: ./oas/Dockerfile
     container_name: crsdeskai-swagger
     ports:
-      - "8005:8080"
+      - "8081:8080"
+  mongodb:
+      image: mongodb/mongodb-atlas-local:preview
+      hostname: mongodb
+      environment:
+         - MONGODB_INITDB_ROOT_USERNAME=admin
+         - MONGODB_INITDB_ROOT_PASSWORD=admin
+         - VOYAGE_API_KEY=${VOYAGE_AI_API_KEY}
+      ports:
+         - 27017:27017
+      networks:
+         - crsai
+      volumes:
+         - ./init:/docker-entrypoint-initdb.d
+         - mongoDb:/data/db
+         - configMongoDb:/data/configdb
+         - mongot:/data/mongot
   postgres:
     image: postgres:latest
     container_name: crsai-postgres
@@ -53,3 +69,6 @@ volumes:
   crsai_pgData:
   crsai_redis:
   crsai_redisinsight:
+  mongoDb:
+  configMongoDb:
+  mongot:

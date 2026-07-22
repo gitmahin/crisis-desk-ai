@@ -67,7 +67,12 @@ export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInje
     res: Response,
     next: NextFunction
   ) {
-    const payload = req.body;
+    const payload = req.resourceResult
+      ? {
+          ...(req.body as any),
+          resourceResult: JSON.stringify(req.resourceResult),
+        }
+      : req.body;
 
     const { data, success, error } = validateWithZod(
       payload,
@@ -80,38 +85,6 @@ export class ReportToolPaylodInjectorMiddleware implements IReportToolPaylodInje
         getSystemCustomErrorMsgByKey("CREATE_REPORT_PAYLOAD_ERROR")!,
         "",
         [z4.flattenError(error)]
-      );
-    }
-
-    const model_crn = req.headers[MODEL_CRN_HEADER_KEY] as string;
-    const { text: model_response } = await generateText({
-      model: groq(model_crn ?? "openai/gpt-oss-20b"),
-      instructions: `Compare the new report to the existing reports list. Flag as a duplicate only if it describes the same real-world incident: same/similar location, same category, and a description matching the same event (wording, contact info, or timestamp differences don't matter).
-
-            Existing reports: ${JSON.stringify(req.resourceResult)}
-            New report: ${JSON.stringify(data)}
-
-            Return ONLY this JSON, no prose, no markdown:
-            {"possibleDuplicate": boolean, "matchedReportId": string | null}
-
-            - true only for a clear, confident match; if multiple match, pick the closest one.
-            - matchedReportId = the matched report's "id", else null.
-            - If reports list is empty/missing/invalid, or you're unsure for any reason, return {"possibleDuplicate": false, "matchedReportId": null}.`,
-      messages: [
-        { role: "user", content: "Check if this new report is a duplicate." },
-      ],
-    });
-
-    const parsed_model_response: DuplicateResponseDataType =
-      convertToValidJson(model_response);
-    console.log("here it is", parsed_model_response);
-
-    if (parsed_model_response.possibleDuplicate) {
-      throw new ApiError(
-        400,
-        getSystemCustomErrorMsgByKey("DUPLICATE_REPORT_FOUND")!,
-        "",
-        [parsed_model_response]
       );
     }
 

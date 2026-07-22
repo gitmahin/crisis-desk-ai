@@ -34,7 +34,9 @@ export const attachAgent = async (
   // console.log("here is mahin agent: ", use_agent);
 
   // Combine Resource Data (Context) with the User's Prompt
-  const prompt = `Context: ${JSON.stringify(req.resourceResult)}. \n Task: ${payload.prompt}`;
+  const prompt = `You have access to existing report data below. When calling the create-new-report tool, you MUST pass this exact data as the "resourceResult" argument.
+  Existing reports (resourceResult as string): ${JSON.stringify(req.resourceResult)}
+  Task: ${payload.prompt}`;
 
   const { tools } = await mcpClient.listTools();
 
@@ -65,6 +67,10 @@ export const attachAgent = async (
 
     const { text, toolResults } = await generateText({
       model: groq(model_crn ?? "openai/gpt-oss-20b"),
+      system: `You are a report management assistant with access to multiple tools.
+                IMPORTANT: Only call create-new-report when the user is actually describing a NEW incident they want to report (e.g. "someone is injured", "there's a fire", "report this emergency"). The presence of words like "create" or "created" in the user's message does NOT mean you should create a report — e.g. "delete the report that was created last" is a deletion request, not a creation request.
+
+                Read the user's actual intent, not just keyword matches. If the task is about finding, deleting, updating, or listing existing reports, use the appropriate tool for that instead.`,
       prompt: prompt,
       tools: groqTools,
     });

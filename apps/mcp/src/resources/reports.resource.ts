@@ -298,5 +298,7 @@ const getSimilarReports: ReadResourceTemplateCallback = async (
   const response = await reportEmbedding.getResponseFromVectorSearch(
     query as string
   );
+
+  console.log("here is the response", response);
   return new MCPResourceResponse(uri.href, JSON.stringify(response)).toObject();
 };

@@ -36,6 +36,7 @@ class ReportZSchema {
       .string({ error: "Invalid model crn!" })
       .max(255, { error: "Model crn is too long!" })
       .optional(),
+    resourceResult: z4.string().optional(),
   });
 
   getReportById = z4.object({
