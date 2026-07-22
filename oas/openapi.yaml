@@ -299,15 +299,15 @@ components:
             success: false
             errors: []
 
-    UpdateReportStatusPayloadError:
-      description: Invalid payload for report status update.
+    updateReportPayloadError:
+      description: Invalid payload for report update.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
           example:
-            title: "Invalid Status Update"
-            message: "We couldn't update the report status. Please ensure the report ID is correct and the selected status is valid."
+            title: "Invalid Report Update"
+            message: "We couldn't update the report. Please ensure the report's all data is valid."
             code: "40002"
             status: 400
             success: false
@@ -838,8 +838,8 @@ paths:
 
   /reports/{id}/status:
     patch:
-      operationId: updateReportStatus
-      summary: Update a report's status
+      operationId: updateReport
+      summary: Update a report
       tags: [Reports]
       security:
         - accessToken: []
@@ -848,17 +848,44 @@ paths:
       requestBody:
         required: true
         content:
-          application/x-www-form-urlencoded:
+          application/json:
             schema:
               type: object
-              required: [status]
               properties:
+                location:
+                  type: string
+                  maxLength: 255
+                geo_location:
+                  type: object
+                  properties:
+                    lat: { type: number }
+                    lng: { type: number }
+                language:
+                  type: string
+                  enum: [BN, EN]
+                description:
+                  type: string
+                  maxLength: 500
+                category:
+                  type: string
+                  enum: [MEDICAL, FIRE, ACCIDENT, CRIME, FLOOD, UTILITY, PUBLIC_SERVICE, INFRASTRUCTURE, OTHER]
+                urgency:
+                  type: string
+                  enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                summary:
+                  type: string
+                suggested_action:
+                  type: string
+                confidence:
+                  type: number
+                  minimum: 0
+                  maximum: 1
                 status:
-                  description: New status of the report
                   type: string
                   enum: [PENDING, IN_REVIEW, ASSIGNED, RESOLVED, REJECTED]
             example:
               status: "RESOLVED"
+              urgency: "HIGH"
       responses:
         "200":
           description: Report updated.
@@ -873,7 +900,7 @@ paths:
                 title: ""
                 data: null
         "400":
-          $ref: "#/components/responses/UpdateReportStatusPayloadError"
+          $ref: "#/components/responses/updateReportPayloadError"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
