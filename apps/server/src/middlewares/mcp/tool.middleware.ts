@@ -53,17 +53,9 @@ export const attachAgent = async (
           description: tool.description,
           inputSchema: jsonSchema(tool.inputSchema),
           execute: async (args: Record<string, any>) => {
-            const finalArgs =
-              tool.name === "create-new-report"
-                ? {
-                    ...args,
-                    resourceResult: JSON.stringify(req.resourceResult),
-                  }
-                : args;
-
             return await mcpClient.callTool({
               name: tool.name,
-              arguments: finalArgs,
+              arguments: args,
             });
           },
         },
@@ -76,7 +68,11 @@ export const attachAgent = async (
       system: `You are a report management assistant with access to multiple tools.
                 IMPORTANT: Only call create-new-report when the user is actually describing a NEW incident they want to report (e.g. "someone is injured", "there's a fire", "report this emergency"). The presence of words like "create" or "created" in the user's message does NOT mean you should create a report — e.g. "delete the report that was created last" is a deletion request, not a creation request.
 
-                Read the user's actual intent, not just keyword matches. If the task is about finding, deleting, updating, or listing existing reports, use the appropriate tool for that instead.`,
+                Read the user's actual intent, not just keyword matches. If the task is about finding, deleting, updating, or listing existing reports, use the appropriate tool for that instead.
+                
+                Existing reports:
+                ${JSON.stringify(req.resourceResult)}
+                `,
       prompt: prompt,
       tools: groqTools,
     });
