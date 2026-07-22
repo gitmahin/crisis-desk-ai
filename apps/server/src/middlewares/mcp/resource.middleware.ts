@@ -25,9 +25,9 @@ export const useMCPResource = async (
 
   // console.log("here is the content: ", contents);
 
-  // if (contents.length < 1) {
-  //   return res.status(200).json(new ApiResponse(200, "Empty resource."));
-  // }
+  if (contents.length < 1) {
+    return res.status(200).json(new ApiResponse(200, "Empty resource."));
+  }
 
   const valid_data = convertToValidJson((contents[0] as { text: string }).text);
 

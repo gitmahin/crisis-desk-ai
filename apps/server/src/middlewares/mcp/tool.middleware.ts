@@ -117,10 +117,6 @@ export const useMCPTool = async (
   const value = req.value;
   const tool_name = req.toolName;
 
-  const { tools } = await mcpClient.listTools();
-  tools.map((tool) => {
-    // console.log("name: ", tool.name);
-  });
   const toolResult = await mcpClient.callTool({
     name: tool_name as string,
     arguments: value as any,
