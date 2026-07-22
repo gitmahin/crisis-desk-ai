@@ -84,8 +84,8 @@ This is a **monorepo**, structured around a few core ideas:
 
 Lets an AI model orchestrate tool calls on your behalf.
 
-- Pass the model via the `X-Model-CRN` header (defaults to `openai/gpt-oss-20b` on Groq).
-- You **must** also send `X-Use-Agent: true` — without it, the request is rejected.
+- Pass the model via the `x-model-crn` header (defaults to `openai/gpt-oss-20b` on Groq).
+- You **must** also send `x-use-agent: true` — without it, the request is rejected.
 
 ### Direct tool execution — `useMCPTool`
 
