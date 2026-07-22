@@ -141,7 +141,8 @@ export class ReportTools extends McpRegistrar {
  */
 const createReportTool = async (payload: CreateReportPayloadType) => {
   // dont json.stringify it its already stringyfied
-  const { contact, description, language, location, name } = payload;
+  const { contact, description, language, location, name, resourceResult } =
+    payload;
 
   // Sampling is deprecated. So we have to call LLM directly
   // AI-Powered Data Enrichment
@@ -150,6 +151,9 @@ const createReportTool = async (payload: CreateReportPayloadType) => {
     system: `You are a strict JSON-only incident deduplication and classification engine. Never include prose, markdown, or explanations - output raw JSON only.`,
     prompt: `TASK 1 — Duplicate Check:
             Compare the new report against existing reports. Flag "possibleDuplicate": true ONLY if it describes the same real-world incident (same/similar location AND same category AND matching event description). Minor differences in wording, contact info, or timestamp do NOT disqualify a match. If reports list is empty, invalid, or you're unsure, default to false.
+
+            Existing reports:
+            ${resourceResult}
 
             New report:
             - Name: ${name}
