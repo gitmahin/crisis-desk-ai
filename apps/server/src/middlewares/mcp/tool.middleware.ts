@@ -34,9 +34,7 @@ export const attachAgent = async (
   // console.log("here is mahin agent: ", use_agent);
 
   // Combine Resource Data (Context) with the User's Prompt
-  const prompt = `You have access to existing report data below. When calling the create-new-report tool, you MUST pass this exact data as the "resourceResult" argument.
-  Existing reports (resourceResult as string): ${JSON.stringify(req.resourceResult)}
-  Task: ${payload.prompt}`;
+  const prompt = `Task: ${payload.prompt}`;
 
   const { tools } = await mcpClient.listTools();
 
@@ -55,9 +53,17 @@ export const attachAgent = async (
           description: tool.description,
           inputSchema: jsonSchema(tool.inputSchema),
           execute: async (args: Record<string, any>) => {
+            const finalArgs =
+              tool.name === "create-new-report"
+                ? {
+                    ...args,
+                    resourceResult: JSON.stringify(req.resourceResult),
+                  }
+                : args;
+
             return await mcpClient.callTool({
               name: tool.name,
-              arguments: args,
+              arguments: finalArgs,
             });
           },
         },
