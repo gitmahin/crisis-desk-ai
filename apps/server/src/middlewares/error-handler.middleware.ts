@@ -29,7 +29,6 @@ export const errorHandlerMiddleware = (
   next: NextFunction
 ) => {
   let error: ApiError;
-  console.log(err);
 
   /**
    * Normalization
