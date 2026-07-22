@@ -26,7 +26,7 @@ servers:
           - "/v1"
           - ""
 
-  - url: http://crsdskai-alb-60644015.ap-south-1.elb.amazonaws.com{api_base}{version}
+  - url: https://fx41l1wzbe.execute-api.ap-south-1.amazonaws.com{api_base}{version}
     name: Production API
     description: Production server
     variables:
