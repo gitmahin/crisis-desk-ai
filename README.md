@@ -1,3 +1,6 @@
+> [!NOTE]
+> All documentation comments have been fine-tuned using **Gemini 3 Flash Preview**.
+
 # Crisis Desk AI
 
 > AI-powered emergency incident reporting and triage system.
@@ -11,8 +14,8 @@ Welcome — glad you're here. This document covers the architecture, how the pie
 | Resource             | Link                                                                                                                     |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Live API             | [fx41l1wzbe.execute-api.ap-south-1.amazonaws.com/health](https://fx41l1wzbe.execute-api.ap-south-1.amazonaws.com/health) |
-| Swagger UI (OpenAPI) | [dockermahin/crsdsk-ai-swagger](https://hub.docker.com/repository/docker/dockermahin/crsdsk-ai-swagger/general)                  |
-| MCP Server (Docker)  | [dockermahin/mcp-crisis-desk-ai](https://hub.docker.com/repository/docker/dockermahin/mcp-crisis-desk-ai/general)                |
+| Swagger UI (OpenAPI) | [dockermahin/crsdsk-ai-swagger](https://hub.docker.com/repository/docker/dockermahin/crsdsk-ai-swagger/general)          |
+| MCP Server (Docker)  | [dockermahin/mcp-crisis-desk-ai](https://hub.docker.com/repository/docker/dockermahin/mcp-crisis-desk-ai/general)        |
 | Technical Reference  | [crisis-desk-ai-technical-documentation](https://gitmahin.github.io/crisis-desk-ai/)                                     |
 
 ---
