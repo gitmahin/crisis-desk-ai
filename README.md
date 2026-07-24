@@ -1,6 +1,9 @@
 > [!NOTE]
 > All documentation comments have been fine-tuned using **Gemini 3 Flash Preview**.
 
+> [!WARNING]
+> The AWS infrastructure has been removed to avoid unnecessary costs. Before deploying to production, run `terraform apply` to provision the required resources, then trigger the GitHub Actions CI/CD pipeline. **Always run `terraform apply` first**, as the application retrieves its secrets from AWS Systems Manager (SSM) Parameter Store.
+
 # Crisis Desk AI
 
 > AI-powered emergency incident reporting and triage system.
