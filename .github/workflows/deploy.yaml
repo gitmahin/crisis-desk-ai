@@ -129,32 +129,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
           SERVERLESS_ACCESS_KEY: ${{ env.SERVERLESS_ACCESS_KEY }}
           MCP_BASE_URL: ${{ env.MCP_BASE_URL }}
-
-  publish-tech-reference:
-    name: "Crisis Desk AI - Technical Reference"
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - name: Install packages
-        run: pnpm install
-        
-      - name: Build static files
-        run: pnpm gen:docs-all
-      - name: Upload static files as artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./typedoc/
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
   publish-swagger-docker:
     name: Deploy OpenApi Swagger UI
     environment: Production
